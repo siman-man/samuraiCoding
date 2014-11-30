@@ -1,7 +1,7 @@
-@filename='tutorial'
+@filename='siman'
 
 task :default do
-  `g++ -W -Wall -Wno-sign-compare -O2 #{@filename}.cpp`
+  `g++ -W -Wall -Wno-sign-compare -O2 -o #{@filename} #{@filename}.cpp`
 end
 
 task :zip do
@@ -13,3 +13,7 @@ task :battle do
   puts res
 end
 
+task :simulate do
+  system('ruby simulation.rb')
+  system('ruby analyze.rb')
+end

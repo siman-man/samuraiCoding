@@ -1,3 +1,5 @@
+require 'pp'
+
 class AI
   attr_accessor :id, :score, :name
 
@@ -26,14 +28,14 @@ end
 
 class Battle
   def initialize
-    @participant = ['tutorial', 'sample2', 'sample3', 'sample4']
+    @participant = ['siman', 'sample5', 'sample9', 'sample8']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
     @real_points = Array.new(4){ Array.new(6,0) }
 
     @participant.each_with_index do |name, id|
-      `g++ #{name}.cpp -o #{name}`
+      `g++ #{name}.cpp -O2 -o #{name}`
       @ais << AI.new(IO.popen("./#{name}", 'r+'), id, name)
     end
   end

@@ -12,6 +12,10 @@ File.open('result.txt', 'r') do |file|
     player[name]['score'] += score
     player[name]['ranking'] += ranking
 
+    if ranking == 1
+      player[name]['top_count'] += 1
+    end
+
     line_num += 1
   end
 end
@@ -19,5 +23,5 @@ end
 line_num = line_num / 4.0
 
 player.each do |name, data|
-  puts "#{name}:\tAvarage Score - #{data['score']/line_num},\tAvarage Ranking - #{data['ranking']/line_num}"
+  puts "#{name}:\tAvarage Score: #{data['score']/line_num},\tAvarage Ranking: #{data['ranking']/line_num}\tTop Count: #{data['top_count']}"
 end

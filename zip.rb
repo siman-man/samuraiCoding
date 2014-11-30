@@ -1,8 +1,8 @@
 require 'zip'
 require 'fileutils'
 
-zipfile_name = File.expand_path('../sample4.zip', __FILE__)
-input_filenames = ['tutorial.cpp', 'compile.sh', 'run.sh', 'icon.png']
+zipfile_name = File.expand_path('../siman.zip', __FILE__)
+input_filenames = ['siman.cpp', 'compile.sh', 'run.sh', 'icon.png']
 
 FileUtils.rm_r zipfile_name if File.exist?(zipfile_name)
 
