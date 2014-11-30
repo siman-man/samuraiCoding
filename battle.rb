@@ -54,7 +54,7 @@ class Battle
     res = ""
 
     if @turn == 6
-      @real_points.each do |point|
+      @real_points.transpose.each do |point|
         res += point.join(' ')
         res += "\n"
       end

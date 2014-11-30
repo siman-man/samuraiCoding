@@ -167,13 +167,13 @@ class Lang{
     int id;
     int ranking;
     int point[PLAYER_COUNT];
-    int hidden_count;
+    int hiddenCount;
     int attention;
     double popularity;
 
     Lang(){
       ranking = -1;
-      hidden_count = 0;
+      hiddenCount = 0;
       popularity = 0.0;
     }
 
@@ -188,7 +188,7 @@ class Lang{
         total_point += point[i];
       }
 
-      return total_point + 2 * hidden_count;
+      return total_point + 2 * hiddenCount;
     }
 
     double get_ratio(){
@@ -365,6 +365,9 @@ class Tutorial{
       return score;
     }
 
+    /*
+     * 予測値を計算、
+     */
     double calcExpectScore(int hiddenCount){
       //fprintf(stderr, "calcExpectScore\n");
       if(hiddenCount == 6){
@@ -408,6 +411,8 @@ class Tutorial{
 
       double expectScore = calcExpectScore(hiddenCount);
 
+      if(expectScore >= 2.0) return;
+
       for(int i = 0; i < 2; i++){
         expectPoint[1][p1[i]] += expectScore;
         expectPoint[2][p2[i]] += expectScore;
@@ -415,12 +420,18 @@ class Tutorial{
       }
     }
 
+    /*
+     * ゲームデータの更新を行う
+     */
     void updateGameData(){
       //fprintf(stderr, "update =>\n");
       for(int i = 1; i < LANG_COUNT; i++){
         langList[i].popularity = (double)langList[i].total_point() / gameTotalPoint;
       }
 
+      /*
+       * 予測ポイントを公開ポイントに追加する
+       */
       for(int i = 0; i < LANG_COUNT; i++){
         langList[i].point[1] += expectPoint[1][i];
         langList[i].point[2] += expectPoint[2][i];
@@ -428,6 +439,9 @@ class Tutorial{
       }
     }
 
+    /*
+     * ポイントの追加を行う
+     */
     void addPoint(int id, vector<int> &list, int p = 1){
       int size = list.size();
 
@@ -436,6 +450,9 @@ class Tutorial{
       }
     }
 
+    /*
+     * ポイントの削除を行う
+     */
     void subPoint(int id, vector<int> &list, int p = 1){
       int size = list.size();
 
@@ -470,6 +487,9 @@ class Tutorial{
       return list;
     }
 
+    /*
+     * 相手のスコアを考慮しない場合の最適な手順を考える
+     */
     vector<PickUpList> selectTopPick(int id, int num, int point = 1){
       vector<PickUpList> list;
       priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList>  > que;
@@ -499,6 +519,9 @@ class Tutorial{
       return list;
     }
 
+    /*
+     * 平日の選択を考える
+     */
     vector<int> weekSelect(){
       double bestScore = -1000000000.0;
       double score;
@@ -515,7 +538,7 @@ class Tutorial{
         addPoint(MY_ID, data);
 
         int p1size = p1list.size();
-        double total_score = 0.0;
+        double totalScore = 0.0;
 
         for(int i = 0; i < p1size; i++){
           int p2size = p2list.size();
@@ -532,7 +555,7 @@ class Tutorial{
               addPoint(3, p3list[k].list);
 
               score = calc_score(MY_ID);
-              total_score += score;
+              totalScore += score;
 
               subPoint(3, p3list[k].list);
             }
@@ -544,8 +567,8 @@ class Tutorial{
         }
 
 
-        if(bestScore < total_score){
-          bestScore = total_score;
+        if(bestScore < totalScore){
+          bestScore = totalScore;
           best_pattern = data;
         }
 
@@ -558,7 +581,7 @@ class Tutorial{
 
     vector<int> holiday_select(){
       double bestScore = -1000000000.0;
-      double total_score;
+      double totalScore;
       vector<int> best_pattern;
 
       vector<PickUpList> p1list = selectTopPick(1, 2, 2);
@@ -570,7 +593,7 @@ class Tutorial{
         vector<int> data = g.data();
 
         addPoint(MY_ID, data, 2);
-        total_score = 0.0;
+        totalScore = 0.0;
 
         int p1size = p1list.size();
 
@@ -588,7 +611,7 @@ class Tutorial{
               addPoint(3, p3list[k].list, 2);
 
               double score = calc_score(MY_ID);
-              total_score += score;
+              totalScore += score;
 
               subPoint(3, p3list[k].list, 2);
             }
@@ -599,8 +622,8 @@ class Tutorial{
           subPoint(1, p1list[i].list, 2);
         }
 
-        if(bestScore < total_score){
-          bestScore = total_score;
+        if(bestScore < totalScore){
+          bestScore = totalScore;
           best_pattern = data;
         }
 
@@ -623,6 +646,51 @@ class Tutorial{
       return list;
     }
 
+    /*
+     * ターン毎に必要な初期化処理を行う
+     */
+    void eachTurnProc(){
+      memset(expectPoint, 0, sizeof(expectPoint));
+    }
+
+    void updateOpenPoint(){
+      /*
+       * 公開されているポイントの更新
+       */
+      for(int n = 0; n < N; n++){
+        for(int m = 0; m < P; m++){
+          cin >> langList[n].point[m];
+        }
+      }
+
+      /*
+       * 自分のリアルポイントの更新
+       */
+      for(int n = 0; n < N; n++){
+        cin >> langList[0].point[n];
+      }
+    }
+
+    void updateHiddenPoint(){
+      int hidden = 0;
+      vector<int> hiddenList;
+
+      for(int n = 0; n < N; n++){
+        int c;
+        cin >> c;
+        if(c != 0){
+          hidden++;
+        }
+        for(int h = 0; h < c-myHiddenSelect[n]; h++){
+          hiddenList.push_back(n);
+        }
+        langList[n].hiddenCount += c;
+        totalHiddenCount += c;
+      }
+      calcExpectedScore(hidden, hiddenList);
+      gameTotalPoint += 15;
+    }
+
     void run(){
       cout << "READY" << endl;
 
@@ -631,35 +699,12 @@ class Tutorial{
       for(turn = 1; turn <= TURN_LIMIT; turn++){
         cin >> T >> D;
 
-        for(int n = 0; n < N; n++){
-          for(int m = 0; m < P; m++){
-            cin >> langList[n].point[m];
-          }
-        }
+        eachTurnProc();
 
-        for(int n = 0; n < N; n++){
-          cin >> langList[0].point[n];
-        }
-
+        updateOpenPoint();
 
         if(!isHoliday()){
-          int hidden = 0;
-          vector<int> hidden_list;
-
-          for(int n = 0; n < N; n++){
-            int c;
-            cin >> c;
-            if(c != 0){
-              hidden++;
-            }
-            for(int h = 0; h < c-myHiddenSelect[n]; h++){
-              hidden_list.push_back(n);
-            }
-            langList[n].hidden_count += c;
-            totalHiddenCount += c;
-          }
-          calcExpectedScore(hidden, hidden_list);
-          gameTotalPoint += 15;
+          updateHiddenPoint();
         }else{
           gameTotalPoint += 12;
         }
@@ -707,8 +752,11 @@ class Tutorial{
         res += '0' + list[i];
         if(i != size-1) res += " ";
 
+        /*
+         * 自分の隠しポイントは差し引く
+         */
         if(!isHoliday()){
-          langList[list[i]].hidden_count--;
+          langList[list[i]].hiddenCount--;
           myHiddenSelect[list[i]] = 1;
           totalHiddenCount--;
         }
