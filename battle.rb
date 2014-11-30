@@ -28,7 +28,7 @@ end
 
 class Battle
   def initialize
-    @participant = ['siman', 'sample5', 'sample9', 'sample8']
+    @participant = ['siman', 'sample2', 'sample3', 'sample4']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
@@ -53,9 +53,16 @@ class Battle
   def show_open_point(id)
     res = ""
 
-    @lang_points.each do |point|
-      res += point.rotate(id).join(' ')
-      res += "\n"
+    if @turn == 6
+      @real_points.each do |point|
+        res += point.join(' ')
+        res += "\n"
+      end
+    else
+      @lang_points.each do |point|
+        res += point.rotate(id).join(' ')
+        res += "\n"
+      end
     end
 
     res.chomp
@@ -70,7 +77,7 @@ class Battle
   end
 
   def holiday?
-    @turn % 2 == 1
+    @turn % 2 == 0
   end
 
   def update(id, response)
@@ -166,7 +173,7 @@ class Battle
       sleep(0.1)
     end
 
-    9.times do |t|
+    1.upto(9) do |t|
       @turn = t
 
       if holiday?
@@ -178,6 +185,8 @@ class Battle
         response = ai.response.chomp
         update(ai.id, response)
       end
+
+      calc_score if @turn == 5
     end
 
     calc_score
