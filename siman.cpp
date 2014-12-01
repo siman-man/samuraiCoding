@@ -698,7 +698,7 @@ class Tutorial{
       vector<int> list;
 
       for(int i = 0; i < 6; i++){
-        if(langList[i].ranking < 5){
+        if(langList[i].ranking < 6){
           list.push_back(i);
         }
       }
