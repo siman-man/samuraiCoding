@@ -28,7 +28,7 @@ end
 
 class Battle
   def initialize
-    @participant = ['siman', 'sample5', 'sample3', 'sample4']
+    @participant = ['siman', 'sample5', 'sample3', 'sample6']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
@@ -136,6 +136,7 @@ class Battle
   end
 
   def show_result
+    $stderr.puts "total: #{@attention_list.inject(:+)} - #{@attention_list.sort.join(' ')}"
     @ais.sort_by{|ai| -ai.score }.each.with_index(1) do |ai, rank|
       puts "name:#{ai.name}\tscore:#{ai.score}\tranking:#{rank}"
     end
