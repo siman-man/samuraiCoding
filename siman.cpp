@@ -168,6 +168,8 @@ class Lang{
     int     id;
     int     ranking;
     int     point[PLAYER_COUNT];
+    int     topPoint;
+    int     lastPoint;
     int     playerRank[PLAYER_COUNT];
     int     pointThisTurn[PLAYER_COUNT];
     int     hiddenCount;
@@ -184,6 +186,8 @@ class Lang{
     void update(){
       memset(playerRank, 0, sizeof(playerRank));
       memset(pointThisTurn, 0, sizeof(pointThisTurn));
+      topPoint = 0;
+      lastPoint = 100;
 
       for(int i = 1; i <= PLAYER_COUNT; i++){
         int bestPoint = -1;
@@ -197,6 +201,8 @@ class Lang{
         }
 
         playerRank[playerId] = i;
+        topPoint = max(topPoint, bestPoint);
+        lastPoint = min(lastPoint, bestPoint);
       }
     }
 
@@ -232,6 +238,30 @@ class Lang{
 
     double fuzzyScore(int diff){
       if(diff >= 5){
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount <= 2)? -100.0 : 1.0;
+        }else{
+          return (hiddenCount <= 2)? 0.0 : 1.0;
+        }
+      }else if(diff >= 4){
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount <= 2)? -100.0 : 1.0;
+        }else{
+          return (hiddenCount <= 2)? 0.5 : 1.0;
+        }
+      }else if(diff >= 3){
+        return (hiddenCount <= 1)? 1.0 : 0.9;
+      }else if(diff >= 2){
+        return (hiddenCount <= 1)? 1.0 : 0.3;
+      }else if(diff >= 1){
+        return (hiddenCount == 0)? 1.0 : 0.2;
+      }else{
+        return 0.1;
+      }
+    }
+
+    double fuzzyScoreHoliday(int diff){
+      if(diff >= 5){
         return (hiddenCount <= 2)? 0.0 : 1.0;
       }else if(diff >= 4){
         return (hiddenCount <= 2)? 0.5 : 1.0;
@@ -246,23 +276,43 @@ class Lang{
       }
     }
 
-    double fuzzyScoreLast(int diff){
+    double fuzzyScoreLast(int diff, int normalDiff){
       if(diff >= 5){
-        if(pointThisTurn[myId] >= 2){
-
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount <= 2)? -100.0 : 1.0;
         }else{
-          return (hiddenCount <= 2 || pointThisTurn[myId] <= 0)? 0.0 : 1.0;
+          return (hiddenCount <= 2)? 10.0 : 1.0;
         }
-      }else if(diff >= 4){
-        return (hiddenCount <= 2 || pointThisTurn[myId] <= 0)? 0.5 : 1.0;
-      }else if(diff >= 3){
-        return (hiddenCount <= 1 || pointThisTurn[myId] <= 1)? 1.0 : 1.0;
-      }else if(diff >= 2){
+      }else if(diff == 4){
+        if(pointThisTurn[myId] >= 2){
+          return (hiddenCount <= 2)? -100.0 : 1.0;
+        }else{
+          return (hiddenCount <= 2)? 10.0 : 1.0;
+        }
+      }else if(diff == 3){
+        if(pointThisTurn[myId] >= 2){
+          return (hiddenCount <= 1)? 10.0 : 1.0;
+        }else{
+          return (hiddenCount <= 1)? 5.0 : 1.0;
+        }
+      }else if(diff == 2){
         return (hiddenCount <= 1 || pointThisTurn[myId] <= 1)? 1.0 : 0.5;
-      }else if(diff >= 1){
-        return (hiddenCount == 0 || pointThisTurn[myId] <= 2)? 1.0 : 0.3;
+      }else if(diff == 1){
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount == 0 || pointThisTurn[myId] <= 2)? 1.0 : 0.3;
+        }else{
+          if(normalDiff <= 3){
+            return (hiddenCount >= 3)? 0.2 : 0.5;
+          }else{
+            return (hiddenCount >= 3)? 0.5 : 0.2;
+          }
+        }
       }else{
-        return 0.3;
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount >= 3)? -10.0 : 0.0;
+        }else{
+          return (hiddenCount >= 1)? -10.0 : -1.0;
+        }
       }
     }
 
@@ -303,17 +353,37 @@ class Lang{
     /*
      * 最下位との点差を考えてペナルティを考える
      */
-    double fuzzyNormalLast(int diff, int bestDiff){
+    double fuzzyNormalLast(int diff){
       if(diff >= 5){
-        return (hiddenCount <= 4)? 0.0 : 0.0;
+        if(pointThisTurn[myId] >= 2){
+          if(point[myId] < topPoint + min(2, hiddenCount) * 2){
+            return 100.0;
+          }else{
+            return 0.0;
+          }
+        }else{
+          return (hiddenCount <= 4)? 0.0 : 0.0;
+        }
       }else if(diff >= 4){
         return (hiddenCount <= 4)? 0.0 : 0.0;
       }else if(diff >= 3){
         return (hiddenCount <= 3)? 0.0 : 0.1;
       }else if(diff >= 2){
-        return (hiddenCount <= 2 || pointThisTurn[myId] <= 1)? 0.0 : 0.5;
+        if(pointThisTurn[myId] >= 2){
+          if(point[myId] < topPoint + min(2, hiddenCount) * 2){
+            return 100.0;
+          }else{
+            return 0.0;
+          }
+        }else{
+          return (hiddenCount <= 2 || pointThisTurn[myId] <= 1)? 0.0 : 0.5;
+        }
       }else if(diff >= 1){
-        return (hiddenCount == 0 || pointThisTurn[myId] <= 1)? 0.0 : 0.7;
+        if(pointThisTurn[myId] >= 2){
+          return (hiddenCount <= 2)? 10.0 : 100;
+        }else{
+          return (hiddenCount <= 1)? -10.0 : 10.0;
+        }
       }else{
         return 1.0;
       }
@@ -364,19 +434,21 @@ class Lang{
       if(worstPlayer == id){
         if(isLastDay()){
           // ラス確なのでそのままの値を返す
-          return -(attention / worstSameCount) * 1.0;
+          return -(attention / worstSameCount) * 10.0;
         }else{
           return -(attention / worstSameCount) * fuzzyWorst(worstDiff);
         }
       }else if(bestPlayer == id){
         if(isLastDay()){
-          return (attention / bestSameCount) * fuzzyScoreLast(bestDiff) * pointValue[originalPoint-3];
+          return (attention / bestSameCount) * fuzzyScoreLast(bestDiff, normalDiff);
+        }else if(fuzzyScoreHoliday(bestDiff)){
+          return (attention / bestSameCount) * fuzzyScoreHoliday(bestDiff);
         }else{
-          return (attention / bestSameCount) * fuzzyScore(bestDiff) * pointValue[originalPoint-3];
+          return (attention / bestSameCount) * fuzzyScore(bestDiff);
         }
       }else{
         if(isLastDay()){
-          return -attention * fuzzyNormalLast(normalDiff, bestDiff);
+          return -attention * fuzzyNormalLast(normalDiff);
         }else{
           return -attention * fuzzyNormal(normalDiff);
         }
@@ -464,16 +536,19 @@ class Tutorial{
       if(hiddenCount == 6){
         return 0.0;
       }else if(hiddenCount == 5){
-        return 1.0;
+        return 0.0;
       }else if(hiddenCount == 4){
-        return 1.0;
+        return 0.0;
       }else if(hiddenCount == 3){
-        return 1.5;
+        return 0.0;
       }else if(hiddenCount == 2){
-        return 2.0;
+        return 0.0;
       }else{
         return 2.0;
       }
+    }
+
+    void expectHiddenPoint2(){
     }
 
     /*
@@ -510,6 +585,10 @@ class Tutorial{
         expectPoint[1][p1[i]] += expectScore;
         expectPoint[2][p2[i]] += expectScore;
         expectPoint[3][p3[i]] += expectScore;
+
+        langList[p1[i]].hiddenCount--;
+        langList[p2[i]].hiddenCount--;
+        langList[p3[i]].hiddenCount--;
       }
     }
 
@@ -574,7 +653,7 @@ class Tutorial{
         subPoint(id, data, point);
       }while(next_combination(data.begin(), data.begin()+num, data.end()));
 
-      for(int i = 0; i < 5 && !que.empty(); i++){
+      for(int i = 0; i < 10 && !que.empty(); i++){
         PickUpList pl = que.top(); que.pop();
         list.push_back(pl);
       }
@@ -583,7 +662,7 @@ class Tutorial{
     }
 
     /*
-     * 相手のスコアを考慮しない場合の最適な手順を考える
+     * 相手の行動を考慮しない場合の最適な手順を考える
      */
     vector<PickUpList> selectTopPick(int id, int num, int point = 1){
       vector<PickUpList> list;
@@ -752,7 +831,7 @@ class Tutorial{
           list.push_back(i);
         }
         if(langList[i].ranking == 5){
-            list.push_back(i);
+          list.push_back(i);
         }
         if(langList[i].ranking == 6){
           if(langList[i].attention < 0.21){
@@ -785,8 +864,6 @@ class Tutorial{
     void rollbackAttention(){
       for(int i = 0; i < LANG_COUNT; i++){
         langList[i].attention = langList[i].originalPoint;
-
-        //if(isLastDay() && langList[i].playerRank[myId] == 2) langList[i].attention *= 0.5;
       }
     }
 
@@ -847,6 +924,7 @@ class Tutorial{
         if(isFirstDay()){
           updateAttention();
         }else{
+          //updateAttention();
           rollbackAttention();
         }
 
@@ -889,6 +967,13 @@ class Tutorial{
       return turn == 1;
     }
 
+    void showMyHiddenSelect(){
+      for(int i = 0; i < LANG_COUNT; i++){
+        fprintf(stderr, "%d ", myHiddenSelect[i]);
+      }
+      fprintf(stderr, "\n");
+    }
+
     /*
      * vector型で渡した投票のリストを文字列に変換する
      */
@@ -904,7 +989,7 @@ class Tutorial{
         /*
          * 自分の隠しポイントは差し引く
          */
-        if(!isHoliday()){
+        if(isHoliday()){
           langList[list[i]].hiddenCount--;
           myHiddenSelect[list[i]]++;
           totalHiddenCount--;

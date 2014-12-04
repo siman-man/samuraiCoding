@@ -835,7 +835,7 @@ class Tutorial{
         /*
          * 自分の隠しポイントは差し引く
          */
-        if(!isHoliday()){
+        if(isHoliday()){
           langList[list[i]].hiddenCount--;
           myHiddenSelect[list[i]]++;
           totalHiddenCount--;
