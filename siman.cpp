@@ -168,7 +168,8 @@ class Lang{
     int     id;
     int     ranking;
     int     point[PLAYER_COUNT];
-    int     rank[PLAYER_COUNT];
+    int     playerRank[PLAYER_COUNT];
+    int     pointThisTurn[PLAYER_COUNT];
     int     hiddenCount;
     double  attention;
     int  originalPoint;
@@ -181,20 +182,21 @@ class Lang{
     }
 
     void update(){
-      memset(rank, 0, sizeof(rank));
+      memset(playerRank, 0, sizeof(playerRank));
+      memset(pointThisTurn, 0, sizeof(pointThisTurn));
 
       for(int i = 1; i <= PLAYER_COUNT; i++){
         int bestPoint = -1;
         int playerId = -1;
 
         for(int j = 0; j < PLAYER_COUNT; j++){
-          if(rank[j] != 0 && bestPoint < point[j]){
+          if(playerRank[j] == 0 && bestPoint < point[j]){
             bestPoint = point[j];
             playerId = j;
           }
         }
 
-        rank[playerId] = i;
+        playerRank[playerId] = i;
       }
     }
 
@@ -230,9 +232,9 @@ class Lang{
 
     double fuzzyScore(int diff){
       if(diff >= 5){
-        return (hiddenCount <= 2)? 2.0 : 1.0;
+        return (hiddenCount <= 2)? 0.0 : 1.0;
       }else if(diff >= 4){
-        return (hiddenCount <= 2)? 2.0 : 1.0;
+        return (hiddenCount <= 2)? 0.5 : 1.0;
       }else if(diff >= 3){
         return (hiddenCount <= 1)? 1.0 : 0.9;
       }else if(diff >= 2){
@@ -246,15 +248,19 @@ class Lang{
 
     double fuzzyScoreLast(int diff){
       if(diff >= 5){
-        return (hiddenCount <= 2)? 3.0 : 2.0;
+        if(pointThisTurn[myId] >= 2){
+
+        }else{
+          return (hiddenCount <= 2 || pointThisTurn[myId] <= 0)? 0.0 : 1.0;
+        }
       }else if(diff >= 4){
-        return (hiddenCount <= 2)? 2.5 : 1.0;
+        return (hiddenCount <= 2 || pointThisTurn[myId] <= 0)? 0.5 : 1.0;
       }else if(diff >= 3){
-        return (hiddenCount <= 1)? 2.0 : 1.0;
+        return (hiddenCount <= 1 || pointThisTurn[myId] <= 1)? 1.0 : 1.0;
       }else if(diff >= 2){
-        return (hiddenCount <= 1)? 1.0 : 0.5;
+        return (hiddenCount <= 1 || pointThisTurn[myId] <= 1)? 1.0 : 0.5;
       }else if(diff >= 1){
-        return (hiddenCount == 0)? 1.0 : 0.3;
+        return (hiddenCount == 0 || pointThisTurn[myId] <= 2)? 1.0 : 0.3;
       }else{
         return 0.3;
       }
@@ -266,13 +272,13 @@ class Lang{
         return 0.0;
       // そこまで無理しないでも良い
       }else if(diff >= 3){
-        return 0.2;
+        return (hiddenCount <= 2)? 0.2 : 0.0;
       // 隠しパラメータ1発同点範囲
       }else if(diff >= 2){
-        return 0.5;
+        return (hiddenCount <= 3)? 0.5 : 0.2;
       // 隠しパラメータ1発逆転
       }else if(diff >= 1){
-        return 0.5;
+        return (hiddenCount <= 3)? 0.5 : 0.2;
       }else{
         return 0.5;
       }
@@ -280,73 +286,36 @@ class Lang{
 
     double fuzzyNormal(int diff){
       if(diff >= 5){
-        if(hiddenCount <= 2){
-          return 0.0;
-        }else{
-          return 0.15;
-        }
+        return (hiddenCount <= 2)? 0.0 : 0.15;
       }else if(diff >= 4){
-        if(hiddenCount <= 2){
-          return 0.0;
-        }else{
-          return 0.25;
-        }
+        return (hiddenCount <= 2)? 0.0 : 0.25;
       }else if(diff >= 3){
-        if(hiddenCount <= 2){
-          return 0.0;
-        }else{
-          return 0.35;
-        }
+        return (hiddenCount <= 2)? 0.0 : 0.35;
       }else if(diff >= 2){
-        if(hiddenCount <= 1){
-          return 0.0;
-        }else{
-          return 0.9;
-        }
+        return (hiddenCount <= 1)? 0.0 : 0.9;
       }else if(diff >= 1){
-        if(hiddenCount == 0){
-          return 0.0;
-        }else{
-          return 1.0;
-        }
+        return (hiddenCount == 0)? 0.0 : 1.0;
       }else{
         return 1.5;
       }
     }
 
+    /*
+     * 最下位との点差を考えてペナルティを考える
+     */
     double fuzzyNormalLast(int diff, int bestDiff){
       if(diff >= 5){
-        if(hiddenCount <= 4){
-          return -attention * 100.0;
-        }else{
-          return 0.0;
-        }
+        return (hiddenCount <= 4)? 0.0 : 0.0;
       }else if(diff >= 4){
-        if(hiddenCount <= 3){
-          return -attention * 100.0;
-        }else{
-          return 0.0;
-        }
+        return (hiddenCount <= 4)? 0.0 : 0.0;
       }else if(diff >= 3){
-        if(hiddenCount <= 3){
-          return -attention * 100.0;
-        }else{
-          return 0.0;
-        }
+        return (hiddenCount <= 3)? 0.0 : 0.1;
       }else if(diff >= 2){
-        if(hiddenCount <= 2){
-          return -attention * 100.0;
-        }else{
-          return 0.5;
-        }
+        return (hiddenCount <= 2 || pointThisTurn[myId] <= 1)? 0.0 : 0.5;
       }else if(diff >= 1){
-        if(hiddenCount <= 2){
-          return -attention * 100.0;
-        }else{
-          return 0.7;
-        }
+        return (hiddenCount == 0 || pointThisTurn[myId] <= 1)? 0.0 : 0.7;
       }else{
-        return 0.9;
+        return 1.0;
       }
     }
 
@@ -371,7 +340,7 @@ class Lang{
           secondBest = bestScore;
           bestScore = point[i];
         }else if(secondBest < point[i]){
-          secondBest = bestScore;
+          secondBest = point[i];
         }
 
         if(worstScore >= point[i]){
@@ -571,6 +540,7 @@ class Tutorial{
 
       for(int i = 0; i < size; i++){
         langList[list[i]].point[id] += p;
+        langList[list[i]].pointThisTurn[id] += p;
       }
     }
 
@@ -582,6 +552,7 @@ class Tutorial{
 
       for(int i = 0; i < size; i++){
         langList[list[i]].point[id] -= p;
+        langList[list[i]].pointThisTurn[id] -= p;
       }
     }
 
@@ -603,7 +574,7 @@ class Tutorial{
         subPoint(id, data, point);
       }while(next_combination(data.begin(), data.begin()+num, data.end()));
 
-      for(int i = 0; i < 10 && !que.empty(); i++){
+      for(int i = 0; i < 5 && !que.empty(); i++){
         PickUpList pl = que.top(); que.pop();
         list.push_back(pl);
       }
@@ -635,7 +606,7 @@ class Tutorial{
 
       } while(g.next());
 
-      for(int i = 0; i < 20 && !que.empty(); i++){
+      for(int i = 0; i < 10 && !que.empty(); i++){
         PickUpList pl = que.top(); que.pop();
         list.push_back(pl);
       }
@@ -765,27 +736,26 @@ class Tutorial{
     vector<int> firstSelect(){
       vector<int> list;
 
-      for(int i = 0; i < 6; i++){
+      for(int i = 0; i < LANG_COUNT; i++){
         if(langList[i].ranking == 1){
           list.push_back(i);
           if(langList[i].attention >= 0.21){
-            list.push_back(i);
           }
         }
         if(langList[i].ranking == 2){
           list.push_back(i);
-          list.push_back(i);
         }
         if(langList[i].ranking == 3){
+          list.push_back(i);
         }
         if(langList[i].ranking == 4){
+          list.push_back(i);
         }
         if(langList[i].ranking == 5){
-          list.push_back(i);
+            list.push_back(i);
         }
         if(langList[i].ranking == 6){
           if(langList[i].attention < 0.21){
-            list.push_back(i);
           }
         }
       }
@@ -797,7 +767,9 @@ class Tutorial{
      * ターン毎に必要な初期化処理を行う
      */
     void eachTurnProc(){
-      memset(expectPoint, 0.0, sizeof(expectPoint));
+      if(turn == 6){
+        memset(expectPoint, 0.0, sizeof(expectPoint));
+      }
       
       for(int i = 0; i < LANG_COUNT; i++){
         langList[i].update();
@@ -813,6 +785,8 @@ class Tutorial{
     void rollbackAttention(){
       for(int i = 0; i < LANG_COUNT; i++){
         langList[i].attention = langList[i].originalPoint;
+
+        //if(isLastDay() && langList[i].playerRank[myId] == 2) langList[i].attention *= 0.5;
       }
     }
 
