@@ -237,42 +237,207 @@ class Lang{
     }
 
     double fuzzyScore(int diff){
+      // 2位との差が5pt以上ある
       if(diff >= 5){
-        if(pointThisTurn[myId] >= 1){
-          return (hiddenCount <= 2)? -100.0 : 1.0;
+        // 4ターン目の隠しポイント
+        if(turn == 4){
+          // 2pt以上割り振った場合
+          if(pointThisTurn[myId] >= 2){
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : 1.5;
+            }else{
+              return (hiddenCount <= 2)? -1.0 : 0.5;
+            }
+          // 1ptも割り振らない場合 - 5pt
+          }else{
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? 5.0 : 2.0;
+            // 低スコア
+            }else{
+              return (hiddenCount <= 1)? 10.0 : 1.0;
+            }
+          }
+        // 3ターン目と7ターン目 - 5pt
+        }else if(turn % 4 == 3){
+          // 1pt以上振っている
+          if(pointThisTurn[myId] >= 1){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount <= 2)? -1.0 : 2.0;
+            // 低ポイント
+            }else{
+              return (hiddenCount <= 2)? -1.0 : 2.0;
+            }
+          // 1ptも降っていない - 3T-7T-5PT
+          }else{
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount <= 2)? -1.0 : -2.0;
+            // 低ポイント
+            }else{
+              return (hiddenCount <= 2)? -0.5 : -1.0;
+            }
+          }
+        // 6T-8T 5pt
         }else{
-          return (hiddenCount <= 2)? 0.0 : 1.0;
+          // 高ポイント
+          if(originalPoint >= 5){
+            // 1pt以上割り振っている
+            if(pointThisTurn[myId] >= 1){
+              return (hiddenCount <= 2)? 1.0 : 1.5;
+            // 1ptも割り振っていない
+            }else{
+              return (hiddenCount <= 2)? 1.0 : 0.5;
+            }
+          // 低ポイント
+          }else{
+            // 1pt以上割り振っている
+            if(pointThisTurn[myId] >= 1){
+              return (hiddenCount <= 2)? -1.0 : 1.0;
+            // 1ptも割り振っていない
+            }else{
+              return (hiddenCount <= 2)? 0.0 : 1.0;
+            }
+          }
         }
-      }else if(diff >= 4){
-        if(pointThisTurn[myId] >= 1){
-          return (hiddenCount <= 2)? -100.0 : 1.0;
+      // diff 4
+      }else if(diff == 4){
+        if(turn % 4 == 3){
+          // 1pt以上割り振る
+          if(pointThisTurn[myId] >= 1){
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 2)? -1.0 : 1.0;
+            // 低スコア
+            }else{
+              return (hiddenCount <= 2)? -1.0 : 1.0;
+            }
+          // 1ptも割り振らない
+          }else{
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 2)? 0.5 : 0.1;
+            // 低スコア
+            }else{
+              return (hiddenCount <= 2)? 1.0 : 0.5;
+            }
+          }
         }else{
-          return (hiddenCount <= 2)? 0.5 : 1.0;
+          // 1pt割り振っている
+          if(pointThisTurn[myId] >= 1){
+            return (hiddenCount <= 2)? -1.0 : 1.0;
+          // 1ptも割り振らない
+          }else{
+            return (hiddenCount <= 2)? 0.5 : 1.0;
+          }
         }
-      }else if(diff >= 3){
-        return (hiddenCount <= 1)? 1.0 : 0.9;
-      }else if(diff >= 2){
-        return (hiddenCount <= 1)? 1.0 : 0.3;
-      }else if(diff >= 1){
-        return (hiddenCount == 0)? 1.0 : 0.2;
+      // 2位との差が3ptある
+      }else if(diff == 3){
+        if(turn % 4 == 3){
+          // 1pt以上割り振る
+          if(pointThisTurn[myId] >= 2){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? 2.0 : 0.9;
+            // 低ポイント
+            }else{
+              return (hiddenCount <= 1)? 1.0 : 0.5;
+            }
+          // 1ptも増やさない
+          }else{
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : -2.0;
+            }else{
+              return (hiddenCount <= 1)? 1.0 : 0.5;
+            }
+          }
+        // 4ターン目(2回目の隠しポイント)
+        }else if(turn == 4){
+          // 2pt以上振っている
+          if(pointThisTurn[myId] >= 2){
+            return (hiddenCount <= 1)? 10.0 : 0.9;
+          // 何も降っていない
+          }else{
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : -2.0;
+            }else{
+              return (hiddenCount <= 1)? 1.0 : 0.9;
+            }
+          }
+        }else{
+          return (hiddenCount <= 1)? 1.0 : 0.9;
+        }
+      // 2位との差が2pt
+      }else if(diff == 2){
+        if(turn % 4 == 3){
+          // 1pt以上割り振っている
+          if(pointThisTurn[myId] >= 1){
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? 2.0 : 1.0;
+            // 低スコア
+            }else{
+              return (hiddenCount <= 1)? 1.0 : 0.3;
+            }
+          // 1ptも割り振っていない
+          }else{
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : -2.0;
+            // 低スコア
+            }else{
+              return (hiddenCount <= 1)? -0.5 : -1.0;
+            }
+          }
+        // 意味ないかも
+        }else{
+          return (hiddenCount <= 1)? 1.0 : 0.3;
+        }
+      // 2位との差が1pt
+      }else if(diff == 1){
+        // 2ターン目の隠しポイントの割り当て
+        if(turn == 2){
+          // 1ターン目に競合が少なければ積極的に狙う
+          // 高ポイント
+          if(originalPoint >= 5){
+            return (totalPoint() <= 1)? 20.0 : -1.0;
+          // 低ポイント
+          }else{
+            return (totalPoint() <= 1)? 10.0 : -1.0;
+          }
+        // 4ターン目の隠しポイントの割り当て
+        }else if(turn == 4){
+          // 2つのポイントを割り振った場合
+          if(pointThisTurn[myId] >= 4){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 0.7 : 0.2;
+            // 低ポイント
+            }else{
+              return (hiddenCount == 0)? 0.1 : -1.0;
+            }
+          // 1つのポイントを割り振った場合
+          }else if(pointThisTurn[myId] >= 2){
+            return (hiddenCount == 0)? 0.3 : 0.2;
+          // 何もポイントを振らない
+          }else{
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : -2.0;
+            // 低スコア
+            }else{
+              return (hiddenCount == 0)? 0.5 : 0.2;
+            }
+          }
+        // それ以外のターン 3 or 7
+        }else{
+          return (hiddenCount <= 1)? -1.0 : -2.0;
+        }
+      // 2位との差が0pt
       }else{
-        return 0.1;
-      }
-    }
-
-    double fuzzyScoreHoliday(int diff){
-      if(diff >= 5){
-        return (hiddenCount <= 2)? 0.0 : 1.0;
-      }else if(diff >= 4){
-        return (hiddenCount <= 2)? 0.5 : 1.0;
-      }else if(diff >= 3){
-        return (hiddenCount <= 1)? 1.0 : 0.9;
-      }else if(diff >= 2){
-        return (hiddenCount <= 1)? 1.0 : 0.3;
-      }else if(diff >= 1){
-        return (hiddenCount == 0)? 1.0 : 0.2;
-      }else{
-        return 0.1;
+        return (hiddenCount <= 1)? -1.0 : -2.0;
       }
     }
 
@@ -283,35 +448,56 @@ class Lang{
         }else{
           return (hiddenCount <= 2)? 10.0 : 1.0;
         }
+      // diff 4
       }else if(diff == 4){
         if(pointThisTurn[myId] >= 2){
           return (hiddenCount <= 2)? -100.0 : 1.0;
         }else{
           return (hiddenCount <= 2)? 10.0 : 1.0;
         }
+      // diff 3
       }else if(diff == 3){
-        if(pointThisTurn[myId] >= 2){
+        if(pointThisTurn[myId] >= 1){
           return (hiddenCount <= 1)? 10.0 : 1.0;
         }else{
-          return (hiddenCount <= 1)? 5.0 : 1.0;
+          return (hiddenCount <= 0)? 5.0 : 1.0;
         }
+      // diff 2
       }else if(diff == 2){
-        return (hiddenCount <= 1 || pointThisTurn[myId] <= 1)? 1.0 : 0.5;
-      }else if(diff == 1){
         if(pointThisTurn[myId] >= 1){
-          return (hiddenCount == 0 || pointThisTurn[myId] <= 2)? 1.0 : 0.3;
+          return (hiddenCount <= 1)? 1.0 : 0.5;
         }else{
-          if(normalDiff <= 3){
-            return (hiddenCount >= 3)? 0.2 : 0.5;
+          return (hiddenCount <= 1)? 1.0 : 0.5;
+        }
+      // diff 1
+      }else if(diff == 1){
+        if(pointThisTurn[myId] >= 3){
+          return (originalPoint == 3)? -1.0 : 0.3;
+        }else if(pointThisTurn[myId] >= 2){
+          return (originalPoint == 3)? 0.5 : 0.3;
+        }else if(pointThisTurn[myId] >= 1){
+          return (hiddenCount == 0)? 1.0 : 0.3;
+        }else{
+          if(pointThisTurn[myId] >= 1){
+            return (hiddenCount <= 2)? 0.7 : 0.3;
           }else{
-            return (hiddenCount >= 3)? 0.5 : 0.2;
+            return (hiddenCount <= 2)? 0.5 : 0.1;
           }
         }
+      // diff 0
       }else{
         if(pointThisTurn[myId] >= 1){
-          return (hiddenCount >= 3)? -10.0 : 0.0;
+          if(originalPoint == 3){
+            return (hiddenCount >= 3)? 0.0 : 0.0;
+          }else{
+            return (hiddenCount >= 3)? -10.0 : 0.0;
+          }
         }else{
-          return (hiddenCount >= 1)? -10.0 : -1.0;
+          if(originalPoint == 3){
+            return (hiddenCount >= 1)? 0.0 : -1.0;
+          }else{
+            return (hiddenCount >= 1)? -10.0 : -1.0;
+          }
         }
       }
     }
@@ -355,34 +541,34 @@ class Lang{
      */
     double fuzzyNormalLast(int diff){
       if(diff >= 5){
-        if(pointThisTurn[myId] >= 2){
-          if(point[myId] < topPoint + min(2, hiddenCount) * 2){
-            return 100.0;
-          }else{
-            return 0.0;
-          }
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount <= 4)? 10.0 : 0.0;
         }else{
           return (hiddenCount <= 4)? 0.0 : 0.0;
         }
       }else if(diff >= 4){
-        return (hiddenCount <= 4)? 0.0 : 0.0;
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount <= 4)? 10.0 : 0.0;
+        }else{
+          return (hiddenCount <= 4)? 0.0 : 0.0;
+        }
       }else if(diff >= 3){
-        return (hiddenCount <= 3)? 0.0 : 0.1;
+        if(pointThisTurn[myId] >= 1){
+          return (hiddenCount <= 3)? 5.0 : 0.1;
+        }else{
+          return (hiddenCount <= 3)? 0.0 : 0.1;
+        }
       }else if(diff >= 2){
         if(pointThisTurn[myId] >= 2){
-          if(point[myId] < topPoint + min(2, hiddenCount) * 2){
-            return 100.0;
-          }else{
-            return 0.0;
-          }
+          return (hiddenCount <= 2 || pointThisTurn[myId] <= 1)? 0.0 : 0.5;
         }else{
           return (hiddenCount <= 2 || pointThisTurn[myId] <= 1)? 0.0 : 0.5;
         }
       }else if(diff >= 1){
         if(pointThisTurn[myId] >= 2){
-          return (hiddenCount <= 2)? 10.0 : 100;
+          return (hiddenCount <= 2 && originalPoint >= 4)? 10.0 : 10;
         }else{
-          return (hiddenCount <= 1)? -10.0 : 10.0;
+          return (hiddenCount <= 1)? -2.0 : 10.0;
         }
       }else{
         return 1.0;
@@ -441,8 +627,6 @@ class Lang{
       }else if(bestPlayer == id){
         if(isLastDay()){
           return (attention / bestSameCount) * fuzzyScoreLast(bestDiff, normalDiff);
-        }else if(fuzzyScoreHoliday(bestDiff)){
-          return (attention / bestSameCount) * fuzzyScoreHoliday(bestDiff);
         }else{
           return (attention / bestSameCount) * fuzzyScore(bestDiff);
         }
@@ -500,7 +684,7 @@ class Tutorial{
         for(int j = 0; j < LANG_COUNT; j++){
           if(langList[j].ranking != -1) continue;
 
-          if(bestAttention < langList[j].attention){
+          if(bestAttention <= langList[j].attention){
             bestAttention = langList[j].attention;
             bestNumber = j;
           }
@@ -662,38 +846,6 @@ class Tutorial{
     }
 
     /*
-     * 相手の行動を考慮しない場合の最適な手順を考える
-     */
-    vector<PickUpList> selectTopPick(int id, int num, int point = 1){
-      vector<PickUpList> list;
-      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList>  > que;
-      double score;
-
-      RepeatedCombinationGenerator<int> g(&card_list[0], &card_list[6], num);
-      do {
-        vector<int> data = g.data();
-        PickUpList pl;
-        pl.list = data;
-
-        addPoint(id, data, point);
-
-        score = calcScore(id);
-        pl.score = score;
-        que.push(pl);
-
-        subPoint(id, data, point);
-
-      } while(g.next());
-
-      for(int i = 0; i < 10 && !que.empty(); i++){
-        PickUpList pl = que.top(); que.pop();
-        list.push_back(pl);
-      }
-
-      return list;
-    }
-
-    /*
      * 平日の選択を考える
      */
     vector<int> weekSelect(){
@@ -701,48 +853,16 @@ class Tutorial{
       double score;
       vector<int> bestPattern;
 
-      vector<PickUpList> p1list = selectTopPick(1, 5);
-      vector<PickUpList> p2list = selectTopPick(2, 5);
-      vector<PickUpList> p3list = selectTopPick(3, 5);
-
       RepeatedCombinationGenerator<int> g(&card_list[0], &card_list[6], 5);
       do {
         vector<int> data = g.data();
 
         addPoint(myId, data);
 
-        int p1size = p1list.size();
-        double totalScore = 0.0;
+        score = calcScore(myId);
 
-        for(int i = 0; i < p1size; i++){
-          int p2size = p2list.size();
-
-          addPoint(1, p1list[i].list);
-
-          for(int j = 0; j < p2size; j++){
-            int p3size = p3list.size();
-
-            addPoint(2, p2list[j].list);
-
-            for(int k = 0; k < p3size; k++){
-
-              addPoint(3, p3list[k].list);
-
-              score = calcScore(myId);
-              totalScore += score;
-
-              subPoint(3, p3list[k].list);
-            }
-
-            subPoint(2, p2list[j].list);
-          }
-
-          subPoint(1, p1list[i].list);
-        }
-
-
-        if(bestScore < totalScore){
-          bestScore = totalScore;
+        if(bestScore < score){
+          bestScore = score;
           bestPattern = data;
         }
 
@@ -758,46 +878,16 @@ class Tutorial{
       double totalScore;
       vector<int> bestPattern;
 
-      vector<PickUpList> p1list = selectTopPick(1, 2, 2);
-      vector<PickUpList> p2list = selectTopPick(2, 2, 2);
-      vector<PickUpList> p3list = selectTopPick(3, 2, 2);
-
       RepeatedCombinationGenerator<int> g(&card_list[0], &card_list[6], 2);
       do {
         vector<int> data = g.data();
 
         addPoint(myId, data, 2);
-        totalScore = 0.0;
 
-        int p1size = p1list.size();
+        double score = calcScore(myId);
 
-        for(int i = 0; i < p1size; i++){
-          int p2size = p2list.size();
-
-          addPoint(1, p1list[i].list, 2);
-
-          for(int j = 0; j < p2size; j++){
-            int p3size = p3list.size();
-
-            addPoint(2, p2list[j].list, 2);
-
-            for(int k = 0; k < p3size; k++){
-              addPoint(3, p3list[k].list, 2);
-
-              double score = calcScore(myId);
-              totalScore += score;
-
-              subPoint(3, p3list[k].list, 2);
-            }
-
-            subPoint(2, p2list[j].list, 2);
-          }
-
-          subPoint(1, p1list[i].list, 2);
-        }
-
-        if(bestScore < totalScore){
-          bestScore = totalScore;
+        if(bestScore < score){
+          bestScore = score;
           bestPattern = data;
         }
 
@@ -818,24 +908,30 @@ class Tutorial{
       for(int i = 0; i < LANG_COUNT; i++){
         if(langList[i].ranking == 1){
           list.push_back(i);
+          list.push_back(i);
           if(langList[i].attention >= 0.21){
+            list.push_back(i);
+          }
+          if(langList[i].attention >= 0.26){
+            list.push_back(i);
           }
         }
         if(langList[i].ranking == 2){
           list.push_back(i);
+          if(langList[i].attention < 0.21){
+            list.push_back(i);
+          }
+          if(langList[i].attention < 0.26){
+            list.push_back(i);
+          }
         }
         if(langList[i].ranking == 3){
-          list.push_back(i);
         }
         if(langList[i].ranking == 4){
-          list.push_back(i);
         }
         if(langList[i].ranking == 5){
-          list.push_back(i);
         }
         if(langList[i].ranking == 6){
-          if(langList[i].attention < 0.21){
-          }
         }
       }
 
@@ -864,6 +960,9 @@ class Tutorial{
     void rollbackAttention(){
       for(int i = 0; i < LANG_COUNT; i++){
         langList[i].attention = langList[i].originalPoint;
+
+        if(turn == 3 && langList[i].originalPoint == 3) langList[i].attention = 0.1;
+        if(turn == 2) langList[i].attention -= max(2, langList[i].totalPoint());
       }
     }
 
@@ -921,6 +1020,7 @@ class Tutorial{
         cin >> T >> D;
 
         eachTurnProc();
+
         if(isFirstDay()){
           updateAttention();
         }else{
