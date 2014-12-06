@@ -86,12 +86,12 @@ class Battle
     if holiday?
       data.each do |i|
         @real_points[id][i] += 2
+        @hidden_point[i] += 1
       end
     else
       data.each do |i|
         @lang_points[i][id] += 1
         @real_points[id][i] += 1
-        @hidden_point[i] += 1
       end
     end
   end
