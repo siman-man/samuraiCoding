@@ -83,6 +83,10 @@ class Battle
   def update(id, response)
     data = response.split(' ').map(&:to_i)
 
+    if @turn == 5
+      puts "#{id}: #{data.join(' ')}"
+    end
+
     if holiday?
       data.each do |i|
         @real_points[id][i] += 2
