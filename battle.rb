@@ -175,11 +175,11 @@ class Battle
     if lastday?
       if @leader_board[@turn].max == @leader_board[@turn][0]
         @id_history.each do |idx|
-          @values[idx] += (@turn == 5)? 2 : 4
+          @values[idx] += (@turn == 5)? 5 : 10
         end
-      elsif @leader_board[@turn].min == @leader_board[@turn][0] && @leader_board[@turn][0] < 0
+      elsif @leader_board[@turn].min == @leader_board[@turn][0]
         @id_history.each do |idx|
-          @values[idx] -= (@turn == 5)? 2 : 4
+          @values[idx] -= (@turn == 5)? 5 : 10
         end
       elsif @leader_board[@turn][0] > 0
         @id_history.each do |idx|
