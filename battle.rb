@@ -1,12 +1,14 @@
 require 'pp'
 
 class AI
-  attr_accessor :id, :score, :name
+  attr_accessor :id, :score, :name, :selection, :middle_rank
 
   def initialize(ai, id, name)
     @ai = ai
     @name = name
+    @middle_rank = -1
     @score = 0.0
+    @selection = Hash.new
     @id = id
     @ready = false
   end
@@ -113,11 +115,13 @@ class Battle
       selection.each do |i|
         @real_points[id][i] += 2
         @hidden_point[i] += 1
+        @ais[id].selection[i] += 1
       end
     else
       selection.each do |i|
         @lang_points[i][id] += 1
         @real_points[id][i] += 1
+        @ais[id].selection[i] += 1 
       end
     end
   end
@@ -181,43 +185,51 @@ class Battle
         @id_history.each do |idx|
           @values[idx] -= (@turn == 5)? 5 : 10
         end
+      elsif @leader_board[@turn][0] > 5
+        @id_history.each do |idx|
+          if @turn == 5
+            @values[idx] += 2
+          else
+            @values[idx] += (@ais[0].middle_rank == 1)? 1 : 2
+          end
+        end
       elsif @leader_board[@turn][0] > 1
         @id_history.each do |idx|
           @values[idx] += (@turn == 5)? 1 : 2
         end
+      elsif @leader_board[@turn][0] < -5
+        @id_history.each do |idx|
+          if @turn == 5
+            @values[idx] -= 2
+          else
+            @values[idx] -= (@ais[0].middle_rank == 1)? 4 : 1
+          end
+        end
       elsif @leader_board[@turn][0] < 0
         @id_history.each do |idx|
-          @values[idx] -= (@turn == 5)? 1 : 2
+          if @turn == 5
+            @values[idx] -= 1
+          else
+            @values[idx] -= (@ais[0].middle_rank == 1)? 3 : 1
+          end
         end
       end
-    else
+
+      @id_history = Array.new
+    elsif @turn > 1
       diff = @leader_board[@turn][0] - @leader_board[@turn-1][0]
 
-      if @leader_board[@turn][0] >= 0
-        @id_list.each do |idx|
-          puts "update #{idx}: #{@values[idx]} to #{@values[idx] + 1}"
-          @values[idx] += 1
-        end
-      end
-
-      if @leader_board[@turn][0] < 0
-        @id_list.each do |idx|
-          puts "update #{idx}: #{@values[idx]} to #{@values[idx] - 1}"
-          @values[idx] -= 1
-        end
-      end
-
-      if diff < 0
-        @id_list.each do |idx|
-          @values[idx] -= 1
-          puts "update #{idx}: #{@values[idx]} to #{@values[idx] - 1}"
+      if diff <= -1
+        @id_list.each_with_index do |idx, index|
+          @values[idx] -= [1, @ais[0].selection[index]].max
+          $stderr.puts "update #{idx}: #{@values[idx]} to #{@values[idx] - [1,@ais[0].selection[index]].max}"
         end
       end
 
       if diff > 0
         @id_list.each do |idx|
           @values[idx] += 1
-          puts "update #{idx}: #{@values[idx]} to #{@values[idx] + 1}"
+          $stderr.puts "update #{idx}: #{@values[idx]} to #{@values[idx] + 1}"
         end
       end
     end
@@ -274,11 +286,18 @@ class Battle
       @ais.each do |ai|
         ai.input(input_params(ai.id))
         response = ai.response.chomp
+        ai.selection = Hash.new(0)
         update(ai.id, response)
       end
 
       calc_score
 
+
+      if @turn == 5
+        @ais.sort_by{|ai| -ai.score }.each.with_index(1) do |ai, rank|
+          ai.middle_rank = rank
+        end
+      end
       #pp @real_points
     end
 
