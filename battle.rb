@@ -195,12 +195,14 @@ class Battle
 
       if @leader_board[@turn][0] >= 0
         @id_list.each do |idx|
+          puts "update #{idx}: #{@values[idx]} to #{@values[idx] + 1}"
           @values[idx] += 1
         end
       end
 
       if @leader_board[@turn][0] < 0
         @id_list.each do |idx|
+          puts "update #{idx}: #{@values[idx]} to #{@values[idx] - 1}"
           @values[idx] -= 1
         end
       end
@@ -208,12 +210,14 @@ class Battle
       if diff < 0
         @id_list.each do |idx|
           @values[idx] -= 1
+          puts "update #{idx}: #{@values[idx]} to #{@values[idx] - 1}"
         end
       end
 
       if diff > 0
         @id_list.each do |idx|
           @values[idx] += 1
+          puts "update #{idx}: #{@values[idx]} to #{@values[idx] + 1}"
         end
       end
     end

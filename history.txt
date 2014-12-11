@@ -3,3 +3,4 @@ siman:  Avarage Score: -4.489,  Avarage Ranking: 3.01 Top Count: 9
 siman:  Avarage Score: -3.456, Avarage Ranking: 2.91 Top Count: 17
 siman:  Avarage Score: -3.211, Avarage Ranking: 2.8  Top Count: 16
 siman:  Avarage Score: -4.535,  Avarage Ranking: 3.1  Top Count: 12
+siman:  Avarage Score: -4.518, Avarage Ranking: 3.0  Top Count: 11
