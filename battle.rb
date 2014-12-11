@@ -181,7 +181,7 @@ class Battle
         @id_history.each do |idx|
           @values[idx] -= (@turn == 5)? 5 : 10
         end
-      elsif @leader_board[@turn][0] > 0
+      elsif @leader_board[@turn][0] > 1
         @id_history.each do |idx|
           @values[idx] += (@turn == 5)? 1 : 2
         end
@@ -191,14 +191,28 @@ class Battle
         end
       end
     else
-      if @leader_board[@turn-1][0] >= @leader_board[@turn][0]
+      diff = @leader_board[@turn][0] - @leader_board[@turn-1][0]
+
+      if @leader_board[@turn][0] >= 0
         @id_list.each do |idx|
-          $stderr.puts "update #{idx} - #{@values[idx]} to #{@values[idx]-1}"
+          @values[idx] += 1
+        end
+      end
+
+      if @leader_board[@turn][0] < 0
+        @id_list.each do |idx|
           @values[idx] -= 1
         end
-      else
+      end
+
+      if diff < 0
         @id_list.each do |idx|
-          $stderr.puts "update #{idx} - #{@values[idx]} to #{@values[idx]+1}"
+          @values[idx] -= 1
+        end
+      end
+
+      if diff > 0
+        @id_list.each do |idx|
           @values[idx] += 1
         end
       end

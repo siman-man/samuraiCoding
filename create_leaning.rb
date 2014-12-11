@@ -1,26 +1,26 @@
 class Leaning
   TOP   = 2
+  TDIFF = 7
+  LDIFF = 7
   DIVI  = 7
-  TYPE  = 6
-  TURN  = 8
+  TURN  = 9
   POINT = 6 # 0 - 5
-  DIFF  = 8
-  HIDE  = 7
+  HIDE  = 6
   SCORE = 4 # 3 - 6
 
   def initialize
 
-    puts DIFF * DIVI * HIDE * TURN * TYPE * SCORE * POINT * TOP
+    puts TOP * TDIFF * DIVI * HIDE * TURN * SCORE * POINT * LDIFF
 
     File.open('leaning.txt', 'w') do |file|
-      DIVI.times do
-        HIDE.times do
-          DIFF.times do
-            TURN.times do
-              TYPE.times do
-                SCORE.times do
-                  POINT.times do
-                    TOP.times do
+      TOP.times do
+        DIVI.times do
+          HIDE.times do
+            TDIFF.times do
+              LDIFF.times do
+                TURN.times do
+                  SCORE.times do
+                    POINT.times do
                       file.puts(rand(100))
                     end
                   end

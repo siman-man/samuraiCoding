@@ -24,20 +24,13 @@ const int myId          = 0;
 
 // params
 const int TOP           = 2;
+const int TDIFF         = 7;
+const int LDIFF         = 7;
 const int DIVISION      = 7;
-const int CATEGORY      = 6;
 const int POINT         = 6;
 const int TURN          = 9;
-const int DIFF          = 8;
-const int HIDE          = 7;
+const int HIDE          = 6;
 const int SCORE         = 4;
-
-const int FUZZY_WORST = 0;
-const int FUZZY_NORMAL = 1;
-const int FUZZY_SCORE = 2;
-const int FUZZY_WORST_LAST = 3;
-const int FUZZY_NORMAL_LAST = 4;
-const int FUZZY_SCORE_LAST = 5;
 
 const double BAN = -100000000.0;
 int T, P, N;
@@ -46,7 +39,7 @@ int turn = 0;
 int division;
 int card_list[6] = { 0, 1, 2, 3, 4, 5 };
 int pointValue[4] = { 3, 5, 7, 9 };
-int leaning[TOP * DIVISION * CATEGORY * TURN * POINT * DIFF * HIDE * SCORE];
+int leaning[TOP * TDIFF * LDIFF * DIVISION * POINT * TURN * HIDE * SCORE];
 vector<int> idList(6,0);
 vector<int> bestIdList(6,0);
 
@@ -307,8 +300,17 @@ class Lang{
       }
     }
 
-    int createId(int type, int point, int diff, int top = 0){
-      int pid = (top * (DIVISION * TURN * CATEGORY * POINT * DIFF * HIDE * SCORE)) + (division * (TURN * CATEGORY * POINT * DIFF * HIDE * SCORE)) + ((turn-2) * (CATEGORY * POINT * DIFF * HIDE * SCORE)) + (type * (POINT * DIFF * HIDE * SCORE)) + (point * (DIFF * HIDE * SCORE)) + (min(DIFF-1, diff) * (HIDE * SCORE)) + (min(HIDE-1, hiddenCount) * SCORE) + (originalPoint-3);
+    int createId(int tdiff, int ldiff, int point, int top = 0){
+      int s       = SCORE;
+      int hs      = HIDE * SCORE;
+      int lhs     = LDIFF * hs;
+      int tlhs    = TDIFF * lhs;
+      int ptlhs   = POINT * tlhs;
+      int dptlhs  = DIVISION * ptlhs;
+      int tdptlhs = TURN * dptlhs;
+
+      int pid = (top * (tdptlhs)) + ((turn-1) * (dptlhs)) + (division * (ptlhs)) + (point * tlhs) + (min(TDIFF-1, tdiff) * lhs) + (min(LDIFF-1, ldiff) * hs) + (min(HIDE-1, hiddenCount) * s) + (originalPoint-3);
+
       idList[id] = pid;
       return pid;
     }
@@ -351,32 +353,11 @@ class Lang{
         }
       }
 
-      int bestDiff     = bestScore - secondBest;
-      int normalDiff   = point[myId] - worstScore;
-      int worstDiff    = secondWorst - point[myId];
-      int topDiff      = bestScore - point[myId];
-      int top          = (playerRank[myId] == 1)? 1 : 0;
+      int top          = (bestPlayer == myId)? 1 : 0;
+      int topDiff      = (top == 1)? point[myId] - secondBest : bestScore - point[myId];
+      int lastDiff     = point[myId] - worstScore;
 
-      if(worstPlayer == id){
-        if(isLastDay()){
-          // ラス確なのでそのままの値を返す
-          return leaning[createId(FUZZY_WORST_LAST, pointThisTurn[myId], worstDiff, top)];
-        }else{
-          return leaning[createId(FUZZY_WORST, pointThisTurn[myId], worstDiff, top)];
-        }
-      }else if(bestPlayer == id){
-        if(isLastDay()){
-          return leaning[createId(FUZZY_SCORE_LAST, pointThisTurn[myId], bestDiff, top)];
-        }else{
-          return leaning[createId(FUZZY_SCORE, pointThisTurn[myId], bestDiff, top)];
-        }
-      }else{
-        if(isLastDay()){
-          return leaning[createId(FUZZY_NORMAL_LAST, pointThisTurn[myId], normalDiff, top)];
-        }else{
-          return leaning[createId(FUZZY_NORMAL, pointThisTurn[myId], normalDiff, top)];
-        }
-      }
+      return leaning[createId(topDiff, lastDiff, pointThisTurn[myId], top)];
     }
 };
 
@@ -408,10 +389,12 @@ class Tutorial{
       int i = 0;
       int score;
       while(getline(ifs, str)){
-        score = stoi(str);
+        score = atoi(str.c_str());
         leaning[i] = score;
         i++;
       }
+
+      fprintf(stderr, "leaning size = %lu\n", sizeof(leaning)/sizeof(int));
     }
 
     void init(){
@@ -442,7 +425,8 @@ class Tutorial{
       }
 
       // 区間を決める
-      division = sumPt / 3 - 6;
+      division = min(36, sumPt) / 3 - 5;
+      fprintf(stderr, "division = %d, sumPt = %d\n", division, sumPt);
 
       /*
        * 選択ソートでポイントが高い順にランク付けを行う
@@ -786,7 +770,8 @@ class Tutorial{
         if(isHoliday()){
           res = holidaySelect();
         }else if(isFirstDay()){
-          res = firstSelect();
+          //res = firstSelect();
+          res = weekSelect();
         }else{
           res = weekSelect();
         }
@@ -856,9 +841,12 @@ class Tutorial{
 
       for(int i = 0; i < size; i++){
         //fprintf(stderr, "id: %d, value: %d\n", bestIdList[i], leaning[bestIdList[i]]);
-        res += to_string(bestIdList[i]);
+        stringstream ss;
+        ss << bestIdList[i];
+        res += ss.str();
         if(i != size-1) res += " ";
       }
+
 
       return res;
     }
