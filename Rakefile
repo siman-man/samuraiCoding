@@ -1,4 +1,4 @@
-@filename='siman'
+@filename='sample10'
 
 task :default do
   `g++ -W -Wall -Wno-sign-compare -O2 -o #{@filename} #{@filename}.cpp`

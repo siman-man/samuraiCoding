@@ -12,6 +12,8 @@ class Leaning
 
     puts TOP * TDIFF * DIVI * HIDE * TURN * SCORE * POINT * LDIFF
 
+    return
+
     File.open('leaning.txt', 'w') do |file|
       TOP.times do
         DIVI.times do

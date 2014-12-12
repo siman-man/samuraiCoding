@@ -380,7 +380,7 @@ class Tutorial{
   public:
     void allBefore(){
       string str;
-      ifstream ifs("leaning.txt");
+      ifstream ifs("sample9leaning.txt");
 
       if(ifs.fail()){
         cout << "Failed" << endl;
@@ -393,8 +393,6 @@ class Tutorial{
         leaning[i] = score;
         i++;
       }
-
-      fprintf(stderr, "leaning size = %lu\n", sizeof(leaning)/sizeof(int));
     }
 
     void init(){
@@ -426,7 +424,6 @@ class Tutorial{
 
       // 区間を決める
       division = min(36, sumPt) / 3 - 5;
-      fprintf(stderr, "division = %d, sumPt = %d\n", division, sumPt);
 
       /*
        * 選択ソートでポイントが高い順にランク付けを行う
@@ -776,8 +773,7 @@ class Tutorial{
           res = weekSelect();
         }
 
-        cout << submit2string(res) << " " << leaning2string() << endl;
-        //fprintf(stderr, "turn %d: %s\n", turn, leaning2string().c_str());
+        cout << submit2string(res) << endl;
         //showHiddenCount();
       }
     }

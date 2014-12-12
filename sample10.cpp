@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -7,6 +6,7 @@
 #include <string>
 #include <string.h>
 #include <sstream>
+#include <fstream>
 #include <set>
 #include <cstdio>
 #include <cstdlib>
@@ -20,7 +20,7 @@ typedef long long ll;
 const int PLAYER_COUNT  = 4;
 const int LANG_COUNT    = 6;
 const int TURN_LIMIT    = 9;
-const int myId          = 0;
+const int myId         = 0;
 
 // params
 const int TOP           = 2;
@@ -32,16 +32,12 @@ const int TURN          = 9;
 const int HIDE          = 6;
 const int SCORE         = 4;
 
-const double BAN = -100000000.0;
 int T, P, N;
 string D;
 int turn = 0;
 int division;
 int card_list[6] = { 0, 1, 2, 3, 4, 5 };
-int pointValue[4] = { 3, 5, 7, 9 };
 int leaning[TOP * TDIFF * LDIFF * DIVISION * POINT * TURN * HIDE * SCORE];
-vector<int> idList(6,0);
-vector<int> bestIdList(6,0);
 
 //======================================================================================//
 //     next_combination
@@ -175,8 +171,6 @@ int totalHiddenCount = 0;
 int gameTotalPoint = 0;
 double expectPoint[4][6];
 int myHiddenSelect[LANG_COUNT];
-int scoreTypeCount[7];
-int highPointCount = 0;
 
 bool isLastDay(){
   return turn == 9 || turn == 5;
@@ -187,13 +181,10 @@ class Lang{
     int     id;
     int     ranking;
     int     point[PLAYER_COUNT];
-    int     topPoint;
-    int     lastPoint;
-    int     playerRank[PLAYER_COUNT];
-    int     pointThisTurn[PLAYER_COUNT];
     int     hiddenCount;
+    int     pointThisTurn[PLAYER_COUNT];
+    int     originalPoint;
     double  attention;
-    int  originalPoint;
     double  popularity;
 
     Lang(){
@@ -202,79 +193,11 @@ class Lang{
       popularity = 0.0;
     }
 
-    void update(){
-      memset(playerRank, 0, sizeof(playerRank));
-      memset(pointThisTurn, 0, sizeof(pointThisTurn));
-      topPoint = 0;
-      lastPoint = 100;
-
-      for(int i = 1; i <= PLAYER_COUNT; i++){
-        int bestPoint = -1;
-        int playerId = -1;
-
-        for(int j = 0; j < PLAYER_COUNT; j++){
-          if(playerRank[j] == 0 && bestPoint < point[j]){
-            bestPoint = point[j];
-            playerId = j;
-          }
-        }
-
-        playerRank[playerId] = i;
-        topPoint = max(topPoint, bestPoint);
-        lastPoint = min(lastPoint, bestPoint);
-      }
-    }
-
-    void showRanking(){
-      int bestScore      = -1;
-      int secondBest     = -1;
-      int secondPlayer   = -1;
-      int bestPlayer     = -1;
-      int bestSameCount  = 1;
-      int worstScore     = 100;
-      int worstPlayer    = -1;
-      int secondWorst    = -1;
-      int worstSameCount = 1;
-
-      for(int i = 0; i < PLAYER_COUNT; i++){
-        if(bestScore <= point[i]){
-          if(bestScore == point[i]){
-            bestSameCount++;
-          }else{
-            secondPlayer = bestPlayer;
-            bestPlayer = i;
-            bestSameCount = 1;
-          }
-          secondBest = bestScore;
-          bestScore = point[i];
-        }else if(secondBest < point[i]){
-          secondBest = point[i];
-          secondPlayer = i;
-        }
-
-        if(worstScore >= point[i]){
-          if(worstScore == point[i]){
-            worstSameCount++;
-          }else{
-            worstPlayer = i;
-            worstSameCount = 1;
-          }
-          secondWorst = worstScore;
-          worstScore = point[i];
-        }else if(secondWorst > point[i]){
-          secondWorst = point[i];
-        }
-      }
-
-      //fprintf(stderr, "card%d: top: %d, score: %d, second: %d, score: %d, sumPoint = %d\n", id, bestPlayer, bestScore, secondPlayer, secondBest, enemyTotalPoint());
-    }
-
     double interest(int id){
-      return (double)point[id] / enemyTotalPoint();
+      return (double)point[id] / totalPoint();
     }
 
-    // 相手のポイントの合計値を求める
-    int enemyTotalPoint(){
+    int totalPoint(){
       int openPoint = 0;
 
       for(int i = 1; i < PLAYER_COUNT; i++){
@@ -311,19 +234,110 @@ class Lang{
 
       int pid = (top * (tdptlhs)) + ((turn-1) * (dptlhs)) + (division * (ptlhs)) + (point * tlhs) + (min(TDIFF-1, tdiff) * lhs) + (min(LDIFF-1, ldiff) * hs) + (min(HIDE-1, hiddenCount) * s) + (originalPoint-3);
 
-      idList[id] = pid;
       return pid;
+    }
+
+    double fuzzyScore(int diff){
+      if(diff >= 5){
+        if(hiddenCount <= 2){
+          return 2.0;
+        }else{
+          return 1.0;
+        }
+      }else if(diff >= 4){
+        if(hiddenCount <= 2){
+          return 1.5;
+        }else{
+          return 1.0;
+        }
+      }else if(diff >= 3){
+        if(hiddenCount <= 1){
+          return 1.0;
+        }else{
+          return (isLastDay())? 1.0 : 0.9;
+        }
+      }else if(diff >= 2){
+        if(hiddenCount <= 1){
+          return 1.0;
+        }else{
+          return (isLastDay())? 1.0 : 0.6;
+        }
+      }else if(diff >= 1){
+        if(hiddenCount == 0){
+          return 1.0;
+        }else{
+          return 0.3;
+        }
+      }else{
+        return 0.3;
+      }
+    }
+
+    double fuzzyWorst(int diff){
+      if(diff >= 5){
+        return 0.0;
+      }else if(diff >= 4){
+        return (isLastDay())? 1.0 : 0.1;
+      }else if(diff >= 3){
+        return (isLastDay())? 1.0 : 0.6;
+      }else if(diff >= 2){
+        return (isLastDay())? 1.0 : 0.8;
+      }else if(diff >= 1){
+        if(hiddenCount <= 6){
+          return (isLastDay())? 1.0 : 1.5;
+        }else{
+          return 1.0;
+        }
+      }else{
+        return (isLastDay())? 0.5 : 3.0;
+      }
+    }
+
+    double fuzzyNormal(int diff){
+      if(diff >= 5){
+        if(hiddenCount <= 2){
+          return 0.0;
+        }else{
+          return 0.1;
+        }
+      }else if(diff >= 4){
+        if(hiddenCount <= 2){
+          return 0.0;
+        }else{
+          return (isLastDay())? 0.0 : 0.05;
+        }
+      }else if(diff >= 3){
+        if(hiddenCount <= 2){
+          return 0.0;
+        }else{
+          return (isLastDay())? 0.0 : 0.15;
+        }
+      }else if(diff >= 2){
+        if(hiddenCount <= 1){
+          return 0.0;
+        }else{
+          return (isLastDay())? 0.0 : 0.2;
+        }
+      }else if(diff >= 1){
+        if(hiddenCount == 0){
+          return 0.0;
+        }else{
+          return (isLastDay())? 0.0 : 0.4;
+        }
+      }else{
+        return 0.7;
+      }
     }
 
     double playerPoint(int id){
       int bestScore      = -1;
       int secondBest     = -1;
       int bestPlayer     = -1;
-      int bestSameCount   = 1;
+      int bestSameCount   = 0;
       int worstScore     = 100;
-      int worstPlayer    = -1;
+      int worst_player    = -1;
       int secondWorst    = -1;
-      int worstSameCount  = 1;
+      int worstSameCount  = 0;
 
       for(int i = 0; i < PLAYER_COUNT; i++){
         if(bestScore <= point[i]){
@@ -336,14 +350,14 @@ class Lang{
           secondBest = bestScore;
           bestScore = point[i];
         }else if(secondBest < point[i]){
-          secondBest = point[i];
+          secondBest = bestScore;
         }
 
         if(worstScore >= point[i]){
           if(worstScore == point[i]){
             worstSameCount++;
           }else{
-            worstPlayer = i;
+            worst_player = i;
             worstSameCount = 1;
           }
           secondWorst = worstScore;
@@ -364,7 +378,6 @@ class Lang{
 struct PickUpList {
   vector<int> list;
   double score;
-  vector<int> idList;
 
   bool operator >(const PickUpList &e) const{
     return score < e.score;
@@ -380,9 +393,10 @@ class Tutorial{
   public:
     void allBefore(){
       string str;
-      ifstream ifs("leaning.txt");
+      ifstream ifs("sample9leaning.txt");
 
       if(ifs.fail()){
+        fprintf(stderr, "Failed\n");
         cout << "Failed" << endl;
       }
   
@@ -394,45 +408,35 @@ class Tutorial{
         i++;
       }
 
-      fprintf(stderr, "leaning size = %lu\n", sizeof(leaning)/sizeof(int));
     }
 
     void init(){
       cin >> T >> P >> N;
+      int sumPt = 0;
 
       memset(expectPoint, 0.0, sizeof(expectPoint));
-      memset(scoreTypeCount, 0, sizeof(scoreTypeCount));
 
-      int sumPt = 0;
       /*
        * 言語情報の初期化
        */
       for(int i = 0; i < N; i++){
         Lang l;
         l.id = i;
-        int attention;
-        // 言語のポイントを取得
-        cin >> attention;
-        l.attention = attention;
-        l.originalPoint = l.attention;
+        cin >> l.attention;
         langTotalPoint += l.attention;
-        scoreTypeCount[attention]++;
-        sumPt += attention;
-
-        if(attention >= 5) highPointCount++;
+        l.originalPoint = l.attention;
+        sumPt += l.originalPoint;
 
         langList[i] = l;
       }
 
-      // 区間を決める
       division = min(36, sumPt) / 3 - 5;
-      fprintf(stderr, "division = %d, sumPt = %d\n", division, sumPt);
 
       /*
        * 選択ソートでポイントが高い順にランク付けを行う
        */
       for(int i = 1; i <= LANG_COUNT; i++){
-        double bestAttention = 0;
+        int bestAttention = 0;
         int bestNumber = -1;
 
         for(int j = 0; j < LANG_COUNT; j++){
@@ -447,12 +451,14 @@ class Tutorial{
         langList[bestNumber].ranking = i;
       }
 
+
       for(int i = 0; i < P; i++){
         Player p;
         p.id = i;
         p.score = 0.0;
         player_list[i] = p;
       }
+
     }
 
     // 渡されたidのプレイヤーのスコアを計算
@@ -474,19 +480,56 @@ class Tutorial{
       if(hiddenCount == 6){
         return 0.0;
       }else if(hiddenCount == 5){
-        return 0.0;
+        return 1.0;
       }else if(hiddenCount == 4){
-        return 0.0;
+        return 1.0;
       }else if(hiddenCount == 3){
-        return 0.0;
+        return 1.5;
       }else if(hiddenCount == 2){
-        return 0.0;
+        return 2.0;
       }else{
         return 2.0;
       }
     }
 
-    void expectHiddenPoint2(){
+    /*
+     * 敵の隠しポイントを予測する。
+     */
+    void calcExpectedScore(int hiddenCount, vector<int> &list){
+      //fprintf(stderr, "calcExpectedScore =>\n");
+      if(list.size() == 0) return;
+      if(isFirstDay()) return;
+
+      /*
+       * 5ターン目終了後に、隠しポイントが公開されるので、隠しポイントは
+       * 初期化しておく。
+       */
+      if(turn == 6){
+        for(int i = 0; i < 6; i++){
+          expectPoint[1][i] = 0.0;
+          expectPoint[2][i] = 0.0;
+          expectPoint[3][i] = 0.0;
+        }
+        for(int i = 0; i < LANG_COUNT; i++){
+          langList[i].hiddenCount = 0;
+        }
+      }
+
+      vector<PickUpList> p1list = selectHiddenPick(1, 2, 2, list);
+      vector<PickUpList> p2list = selectHiddenPick(2, 2, 2, list);
+      vector<PickUpList> p3list = selectHiddenPick(3, 2, 2, list);
+
+      vector<int> p1 = p1list[0].list;
+      vector<int> p2 = p2list[0].list;
+      vector<int> p3 = p3list[0].list;
+
+      double expectScore = calcExpectScore(hiddenCount);
+
+      for(int i = 0; i < 2; i++){
+        expectPoint[1][p1[i]] += expectScore;
+        expectPoint[2][p2[i]] += expectScore;
+        expectPoint[3][p3[i]] += expectScore;
+      }
     }
 
     /*
@@ -495,22 +538,17 @@ class Tutorial{
     void updateGameData(){
       //fprintf(stderr, "update =>\n");
       for(int i = 1; i < LANG_COUNT; i++){
-        langList[i].popularity = (double)langList[i].enemyTotalPoint() / gameTotalPoint;
+        langList[i].popularity = (double)langList[i].totalPoint() / gameTotalPoint;
       }
-    }
 
-    void showHiddenCount(){
+      /*
+       * 予測ポイントを公開ポイントに追加する
+       */
       for(int i = 0; i < LANG_COUNT; i++){
-        fprintf(stderr, "%d ", langList[i].hiddenCount);
+        langList[i].point[1] += expectPoint[1][i];
+        langList[i].point[2] += expectPoint[2][i];
+        langList[i].point[3] += expectPoint[3][i];
       }
-      fprintf(stderr, "\n");
-    }
-
-    void showPointThisTurn(){
-      for(int i = 0; i < LANG_COUNT; i++){
-        fprintf(stderr, "%d ", langList[i].pointThisTurn[myId]);
-      }
-      fprintf(stderr, "\n");
     }
 
     /*
@@ -537,12 +575,75 @@ class Tutorial{
       }
     }
 
+    vector<PickUpList> selectHiddenPick(int id, int num, int point, vector<int> data){
+      //fprintf(stderr, "selectHiddenPick =>\n");
+      vector<PickUpList> list;
+      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList>  > que;
+      double score;
+
+      do{
+        PickUpList pl;
+        pl.list = data;
+        addPoint(id, data, point);
+
+        score = calcScore(id);
+        pl.score = score;
+        que.push(pl);
+
+        subPoint(id, data, point);
+      }while(next_combination(data.begin(), data.begin()+num, data.end()));
+
+      for(int i = 0; i < 10 && !que.empty(); i++){
+        PickUpList pl = que.top(); que.pop();
+        list.push_back(pl);
+      }
+
+      return list;
+    }
+
+    /*
+     * 相手のスコアを考慮しない場合の最適な手順を考える
+     */
+    vector<PickUpList> selectTopPick(int id, int num, int point = 1){
+      vector<PickUpList> list;
+      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList>  > que;
+      double score;
+
+      RepeatedCombinationGenerator<int> g(&card_list[0], &card_list[6], num);
+      do {
+        vector<int> data = g.data();
+        PickUpList pl;
+        pl.list = data;
+
+        addPoint(id, data, point);
+
+        score = calcScore(id);
+        pl.score = score;
+        que.push(pl);
+
+        subPoint(id, data, point);
+
+      } while(g.next());
+
+      for(int i = 0; i < 20; i++){
+        PickUpList pl = que.top(); que.pop();
+        list.push_back(pl);
+      }
+
+      return list;
+    }
+
     /*
      * 平日の選択を考える
      */
     vector<int> weekSelect(){
+      double bestScore = -1000000000.0;
+      double score;
       vector<int> bestPattern;
-      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList> > que;
+
+      vector<PickUpList> p1list = selectTopPick(1, 5);
+      vector<PickUpList> p2list = selectTopPick(2, 5);
+      vector<PickUpList> p3list = selectTopPick(3, 5);
 
       RepeatedCombinationGenerator<int> g(&card_list[0], &card_list[6], 5);
       do {
@@ -550,52 +651,101 @@ class Tutorial{
 
         addPoint(myId, data);
 
-        double score = calcScore(myId);
+        int p1size = p1list.size();
+        double totalScore = 0.0;
 
-        PickUpList pick;
-        pick.score = score;
-        pick.list = data;
-        pick.idList = idList;
-        que.push(pick);
+        for(int i = 0; i < p1size; i++){
+          int p2size = p2list.size();
+
+          addPoint(1, p1list[i].list);
+
+          for(int j = 0; j < p2size; j++){
+            int p3size = p3list.size();
+
+            addPoint(2, p2list[j].list);
+
+            for(int k = 0; k < p3size; k++){
+
+              addPoint(3, p3list[k].list);
+
+              score = calcScore(myId);
+              totalScore += score;
+
+              subPoint(3, p3list[k].list);
+            }
+
+            subPoint(2, p2list[j].list);
+          }
+
+          subPoint(1, p1list[i].list);
+        }
+
+
+        if(bestScore < totalScore){
+          bestScore = totalScore;
+          bestPattern = data;
+        }
 
         subPoint(myId, data);
 
       } while(g.next());
 
-      vector<int> ans = que.top().list;
-      bestIdList = que.top().idList;
-      //fprintf(stderr, "turn %d: BestScore = %f\n", turn, que.top().score);
-
-      return ans;
+      return bestPattern;
     }
 
     vector<int> holidaySelect(){
-      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList> > que;
+      double bestScore = -1000000000.0;
+      double totalScore;
+      vector<int> bestPattern;
+
+      vector<PickUpList> p1list = selectTopPick(1, 2, 2);
+      vector<PickUpList> p2list = selectTopPick(2, 2, 2);
+      vector<PickUpList> p3list = selectTopPick(3, 2, 2);
 
       RepeatedCombinationGenerator<int> g(&card_list[0], &card_list[6], 2);
       do {
         vector<int> data = g.data();
 
         addPoint(myId, data, 2);
+        totalScore = 0.0;
 
-        double score = calcScore(myId); 
+        int p1size = p1list.size();
 
-        if(score > BAN * 0.1){
-          PickUpList pick;
-          pick.score = score;
-          pick.list = data;
-          pick.idList = idList;
-          que.push(pick);
+        for(int i = 0; i < p1size; i++){
+          int p2size = p2list.size();
+
+          addPoint(1, p1list[i].list, 2);
+
+          for(int j = 0; j < p2size; j++){
+            int p3size = p3list.size();
+
+            addPoint(2, p2list[j].list, 2);
+
+            for(int k = 0; k < p3size; k++){
+              addPoint(3, p3list[k].list, 2);
+
+              double score = calcScore(myId);
+              totalScore += score;
+
+              subPoint(3, p3list[k].list, 2);
+            }
+
+            subPoint(2, p2list[j].list, 2);
+          }
+
+          subPoint(1, p1list[i].list, 2);
+        }
+
+        if(bestScore < totalScore){
+          bestScore = totalScore;
+          bestPattern = data;
         }
 
         subPoint(myId, data, 2);
 
       } while(g.next());
-      vector<int> ans = que.top().list;
-      //fprintf(stderr, "turn %d: BestScore = %f\n", turn, que.top().score);
-      bestIdList = que.top().idList;
 
-      return ans;
+      return bestPattern;
     }
 
     /*
@@ -605,47 +755,9 @@ class Tutorial{
     vector<int> firstSelect(){
       vector<int> list;
 
-      /*
-         int cnt = 0;
-         for(int i = 6; i > 0 && cnt < 6; i--){
-         for(int j = 0; j < LANG_COUNT && cnt < 6; j++){
-         if(langList[j].originalPoint >= i){
-         list.push_back(j);
-         cnt++;
-         }
-         }
-         }
-
-         return list;
-         */
-
-      for(int i = 0; i < LANG_COUNT; i++){
-        if(langList[i].ranking == 1){
+      for(int i = 0; i < 6; i++){
+        if(langList[i].ranking < 6){
           list.push_back(i);
-          list.push_back(i);
-          if(langList[i].attention >= 0.21){
-            list.push_back(i);
-          }
-          if(langList[i].attention >= 0.26){
-            list.push_back(i);
-          }
-        }
-        if(langList[i].ranking == 2){
-          list.push_back(i);
-          if(langList[i].attention < 0.21){
-            list.push_back(i);
-          }
-          if(langList[i].attention < 0.26){
-            list.push_back(i);
-          }
-        }
-        if(langList[i].ranking == 3){
-        }
-        if(langList[i].ranking == 4){
-        }
-        if(langList[i].ranking == 5){
-        }
-        if(langList[i].ranking == 6){
         }
       }
 
@@ -656,17 +768,7 @@ class Tutorial{
      * ターン毎に必要な初期化処理を行う
      */
     void eachTurnProc(){
-      if(turn == 6){
-        memset(expectPoint, 0.0, sizeof(expectPoint));
-
-        for(int i = 0; i < LANG_COUNT; i++){
-          langList[i].hiddenCount = 0;
-        }
-      }
-
-      for(int i = 0; i < LANG_COUNT; i++){
-        langList[i].update();
-      }
+      memset(expectPoint, 0.0, sizeof(expectPoint));
     }
 
     void updateAttention(){
@@ -675,34 +777,22 @@ class Tutorial{
       }
     }
 
-    void rollbackAttention(){
-      for(int i = 0; i < LANG_COUNT; i++){
-        langList[i].attention = langList[i].originalPoint;
-      }
-    }
-
     void updateOpenPoint(){
       /*
        * 公開されているポイントの更新
        */
-      //fprintf(stderr, "\noriginal\n");
-      for(int n = 0; n < LANG_COUNT; n++){
-        for(int m = 0; m < PLAYER_COUNT; m++){
-          int pt;
-          cin >> pt;
-          //fprintf(stderr, "%d ", pt);
-          langList[n].point[m] = pt;
+      for(int n = 0; n < N; n++){
+        for(int m = 0; m < P; m++){
+          cin >> langList[n].point[m];
         }
-        //fprintf(stderr, "\n");
       }
 
       /*
        * 自分のリアルポイントの更新
        */
-      //fprintf(stderr, "\n");
       for(int n = 0; n < N; n++){
+        //cin >> langList[0].point[n];
         cin >> langList[n].point[myId];
-        langList[n].showRanking();
       }
     }
 
@@ -726,6 +816,7 @@ class Tutorial{
         totalHiddenCount += c;
       }
 
+      calcExpectedScore(hidden, hiddenList);
       gameTotalPoint += 15;
     }
 
@@ -734,6 +825,7 @@ class Tutorial{
 
       allBefore();
       init();
+      //updateAttention();
 
       /*
        * 9ターン処理を回す
@@ -743,14 +835,7 @@ class Tutorial{
 
         eachTurnProc();
 
-        if(isFirstDay()){
-          updateAttention();
-        }else{
-          rollbackAttention();
-        }
-
         updateOpenPoint();
-        //showPointList();
 
         if(!isHoliday()){
           updateHiddenPoint();
@@ -767,18 +852,16 @@ class Tutorial{
          *   - 休日
          *   - 平日
          */
-        if(isHoliday()){
-          res = holidaySelect();
-        }else if(isFirstDay()){
+        if(isFirstDay()){
           //res = firstSelect();
           res = weekSelect();
+        }else if(isHoliday()){
+          res = holidaySelect();
         }else{
           res = weekSelect();
         }
 
-        cout << submit2string(res) << " " << leaning2string() << endl;
-        //fprintf(stderr, "turn %d: %s\n", turn, leaning2string().c_str());
-        //showHiddenCount();
+        cout << submit2string(res) << endl;
       }
     }
 
@@ -790,24 +873,6 @@ class Tutorial{
     // 初日かどうかをチェック
     bool isFirstDay(){
       return turn == 1;
-    }
-
-    void showMyHiddenSelect(){
-      for(int i = 0; i < LANG_COUNT; i++){
-        fprintf(stderr, "%d ", myHiddenSelect[i]);
-      }
-      fprintf(stderr, "\n");
-    }
-
-    void showPointList(){
-      fprintf(stderr, "\n");
-
-      for(int i = 0; i < LANG_COUNT; i++){
-        for(int j = 0; j < PLAYER_COUNT; j++){
-          fprintf(stderr, "%d ", langList[i].point[j]);
-        }
-        fprintf(stderr, "\n");
-      }
     }
 
     /*
@@ -831,22 +896,6 @@ class Tutorial{
           totalHiddenCount--;
         }
       }
-
-      return res;
-    }
-
-    string leaning2string(){
-      int size = bestIdList.size();
-      string res = "";
-
-      for(int i = 0; i < size; i++){
-        //fprintf(stderr, "id: %d, value: %d\n", bestIdList[i], leaning[bestIdList[i]]);
-        stringstream ss;
-        ss << bestIdList[i];
-        res += ss.str();
-        if(i != size-1) res += " ";
-      }
-
 
       return res;
     }

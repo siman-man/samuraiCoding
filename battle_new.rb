@@ -31,7 +31,7 @@ end
 
 class Battle
   def initialize
-    @participant = ['siman', 'sample10', 'sample8', 'sample6']
+    @participant = ['siman', 'sample9', 'sample7', 'sample8']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
