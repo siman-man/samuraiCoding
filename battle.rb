@@ -30,8 +30,8 @@ class AI
 end
 
 class Battle
-  def initialize
-    @participant = ['siman', 'sample10', 'sample8', 'sample6']
+  def initialize(cflag)
+    @participant = ['siman', 'sample8', 'sample9', 'sample6']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
@@ -43,7 +43,7 @@ class Battle
     @values = Array.new
 
     @participant.each_with_index do |name, id|
-      `g++ #{name}.cpp -O2 -o #{name}`
+      `g++ #{name}.cpp -O2 -o #{name}` if cflag
       @ais << AI.new(IO.popen("./#{name}", 'r+'), id, name)
     end
 
@@ -101,6 +101,8 @@ class Battle
 
   def update(id, response)
     data = response.split(' ').map(&:to_i)
+
+    #$stderr.puts "#{id}: #{response.inspect}"
 
     if holiday?
       selection = data.first(2)
@@ -288,6 +290,7 @@ class Battle
         @hidden_point = Array.new(6, 0)
       end
 
+
       @ais.each do |ai|
         ai.input(input_params(ai.id))
         response = ai.response.chomp
@@ -317,4 +320,4 @@ class Battle
   end
 end
 
-Battle.new.run
+Battle.new(ARGV.any?).run
