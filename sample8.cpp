@@ -22,6 +22,7 @@ const int LANG_COUNT    = 6;
 const int TURN_LIMIT    = 9;
 const int myId         = 0;
 const double BAN = -100000000.0;
+const double BIGBAN = -1000000000.0;
 int T, P, N;
 string D;
 int turn = 0;
@@ -341,8 +342,31 @@ class Lang{
           }
           // 7ターン目
         }else if(turn == 7){
-          // 3pt以上振っている
-          if(pointThisTurn[myId] >= 3){
+          // 4pt以上振っている
+          if(pointThisTurn[myId] >= 4){
+            // 高いポイント
+            if(originalPoint >= 5){
+              // 元々のランキングが1位ではない
+              if(playerRank[myId] != 1){
+                return (hiddenCount <= 1)? -100.0 : 2.0;
+              }else{
+                // 高いポイントが多い
+                if(highPointCount >= 4){
+                  return (hiddenCount <= 1)? -200.0 : -400.0;
+                }else{
+                  if(turn == 3 && sumPoint >= 10){
+                    return -10.0;
+                  }else{
+                    return (hiddenCount <= 1)? -200.0 : -400.0;
+                  }
+                }
+              }
+              // low point
+            }else{
+              return (hiddenCount <= 1)? -20.0 : -1.0;
+            }
+            // 3pt以上振っている
+          }else if(pointThisTurn[myId] >= 3){
             // 高いポイント
             if(originalPoint >= 5){
               // 元々のランキングが1位ではない
@@ -361,7 +385,7 @@ class Lang{
                 }
               }
             }else{
-              return (hiddenCount <= 2)? -1.0 : -2.0;
+              return (hiddenCount <= 1)? -20.0 : -2.0;
             }
             // 1pt以上振っている
           }else if(pointThisTurn[myId] >= 1){
@@ -443,10 +467,10 @@ class Lang{
           }else{
             // 4pt割り振っている
             if(pointThisTurn[myId] == 4){
-              return (hiddenCount <= 1)? BAN : -10.0;
+              return (hiddenCount <= 1)? BAN : -20.0;
               // 1pt以上割り振っている
             }else if(pointThisTurn[myId] >= 1){
-              return (hiddenCount <= 1)? BAN : -5.0;
+              return (hiddenCount <= 1)? BAN : -10.0;
               // 1ptも割り振っていない
             }else{
               return (hiddenCount <= 1)? 2.0 : 1.0;
@@ -631,7 +655,41 @@ class Lang{
               return (hiddenCount <= 2)? 1.0 : 0.5;
             }
           }
-          // 2T - 4T - 6T - 8T - 4PT
+          // 4 turn FSD4T4
+        }else if(turn == 4){
+          // 4pt割り振っている
+          if(pointThisTurn[myId] == 4){
+            // high point
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -1.0 : BAN;
+              // low point
+            }else{
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? -1.0 : BAN;
+              }else{
+                return BAN;
+              }
+            }
+            // 2pt割り振っている
+          }else if(pointThisTurn[myId] == 2){
+            // high piont
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -1.0 : -10.5;
+              // low point
+            }else{
+              return (hiddenCount == 0)? -5.0 : -100.0;
+            }
+            // 1ptも割り振らない
+          }else{
+            // high point
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 1.5 : -1.0;
+              // low point
+            }else{
+              return (hiddenCount <= 2)? 0.5 : 1.0;
+            }
+          }
+          // 2T - 6T - 8T - 4PT
         }else{
           // 1pt割り振っている
           if(pointThisTurn[myId] >= 1){
@@ -657,10 +715,23 @@ class Lang{
          * 2位との差が3pt FSD3
          */
       }else if(diff == 3){
-        // 3T 
+        // 3T FSD3T3
         if(turn == 3){
-          // 4pt以上割り振る
-          if(pointThisTurn[myId] >= 4){
+          // 5pt割り振る
+          if(pointThisTurn[myId] == 5){
+            // 高ポイント
+            if(originalPoint >= 5){
+              if(highPointCount >= 4){
+                return (hiddenCount == 0)? -10.0 : -400.0;
+              }else{
+                return (hiddenCount == 0)? -20.0 : BAN;
+              }
+              // 低ポイント
+            }else{
+              return (hiddenCount == 0)? -100.0 : BAN;
+            }
+            // 4pt以上割り振る
+          }else if(pointThisTurn[myId] >= 4){
             // 高ポイント
             if(originalPoint >= 5){
               if(highPointCount >= 4){
@@ -672,6 +743,23 @@ class Lang{
             }else{
               return (hiddenCount == 0)? -4.0 : -400.0;
             }
+            // 3pt割り振る
+          }else if(pointThisTurn[myId] == 3){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (sumPoint <= 7)? 1.0 : -1.0;
+              // 低ポイント
+            }else{
+              if(highPointCount >= 3){
+                return (hiddenCount == 0)? -5.0 : -100.0;
+              }else{
+                if(originalPoint == 4){
+                  return (hiddenCount == 0)? 1.0 : -100.0;
+                }else{
+                  return (hiddenCount == 0)? 0.0 : -200.0;
+                }
+              }
+            }
             // 2pt以上割り振る
           }else if(pointThisTurn[myId] >= 2){
             // 高ポイント
@@ -681,16 +769,25 @@ class Lang{
             }else{
               return (hiddenCount <= 1)? 1.0 : 0.5;
             }
-            // 1ptも増やさない
-          }else{
+            // 1pt割り振る
+          }else if(pointThisTurn[myId] >= 1){
             // 高スコア
             if(originalPoint >= 5){
               return (hiddenCount <= 1)? -1.0 : -2.0;
             }else{
               return (hiddenCount <= 1)? 1.0 : 0.5;
             }
+            // 0pt
+          }else{
+            // high point
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : -2.0;
+              // low point
+            }else{
+              return (hiddenCount <= 1)? 1.0 : 0.5;
+            }
           }
-          // 7T
+          // 7T FSD3T7
         }else if(turn == 7){
           // 5pt割り振る
           if(pointThisTurn[myId] == 5){
@@ -699,7 +796,7 @@ class Lang{
               if(highPointCount <= 2){
                 return (hiddenCount <= 1)? 1.0 : -100.0;
               }else{
-                return (hiddenCount <= 1)? -1.0 : -1000.0;
+                return (hiddenCount <= 1)? -2.0 : -1000.0;
               }
               // 低ポイント
             }else{
@@ -727,33 +824,53 @@ class Lang{
             }else{
               return (hiddenCount <= 1)? 1.0 : 0.5;
             }
-            // 1ptも増やさない
-          }else{
+            // 1pt割り振る
+          }else if(pointThisTurn[myId] == 1){
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -1.0 : -2.0;
+              return (hiddenCount <= 1)? 1.0 : -2.0;
             }else{
               return (hiddenCount <= 1)? 1.0 : 0.5;
             }
+            // 0pt
+          }else{
+            // 高スコア
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -1.0 : -2.0;
+            }else{
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? 4.0 : 0.5;
+              }else{
+                return (hiddenCount == 0)? 5.0 : 0.5;
+              }
+            }
           }
-          // 4ターン目(2回目の隠しポイント)
+          // 4ターン目 FSD3T4
         }else if(turn == 4){
           // 4pt振っている
           if(pointThisTurn[myId] == 4){
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? 1.0 : -4.0;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount <= 1)? 1.0 : -40.0;
+              }
               // 低スコア
             }else{
               if(highPointCount <= 2){
-                return (hiddenCount <= 1)? -1.0 : -2.0;
+                return (hiddenCount == 0)? -1.0 : -20.0;
               }else{
-                return (hiddenCount <= 1)? -4.0 : -10.0;
+                return (hiddenCount == 0)? -5.0 : BAN;
               }
             }
             // 2pt振っている
           }else if(pointThisTurn[myId] >= 2){
-            return (hiddenCount <= 1)? 10.0 : 0.5;
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 10.0 : 0.5;
+            }else{
+              return (hiddenCount == 0)? 0.0 : 1.5;
+            }
             // 何も降っていない
           }else{
             if(originalPoint >= 5){
@@ -788,46 +905,73 @@ class Lang{
             }
             // 何も降っていない
           }else{
-            return (hiddenCount <= 1)? 1.0 : 0.5;
+            // high point
+            if(originalPoint >= 5){
+              if(highPointCount >= 3){
+                return (hiddenCount <= 1)? 5.0 : 0.5;
+              }else{
+                return (hiddenCount <= 1)? 2.0 : 0.5;
+              }
+              // low point
+            }else{
+              if(highPointCount >= 3){
+                return (hiddenCount <= 1)? 5.0 : 0.5;
+              }else{
+                return (hiddenCount <= 1)? 2.0 : 0.5;
+              }
+            }
           }
-          // 2 turn
+          // 2 turn FSD3T2
         }else if(turn == 2){
+          // 4pt割り振る
           if(pointThisTurn[myId] == 4){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -1.0 : -5.0;
+              return -sumPoint;
               // 低ポイント
             }else{
-              if(hiddenCount <= 3){
-                return -10.0;
+              if(highPointCount >= 3){
+                return -100.0;
               }else{
-                return -20.0;
+                return -200.0;
               }
             }
             // 2pt以上振っている
           }else if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -1.0 : -5.0;
+              return -1.0;
               // 低ポイント
             }else{
-              return (hiddenCount <= 1)? -2.0 : -10.0;
+              if(highPointCount >= 3){
+                return -10.0;
+              }else{
+                return -5.0;
+              }
             }
             // 何も降っていない
           }else{
-            return (hiddenCount <= 1)? 1.0 : 0.5;
+            if(originalPoint >= 5){
+              if(originalPoint == 6){
+                return -2.0;
+              }else{
+                return -1.0;
+              }
+            }else{
+              return 1.0;
+            }
           }
-          // 6 - 4PT
+          // 6 turn FSD3T6
         }else{
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
             // 高ポイント
             if(originalPoint >= 5){
-              return -1.0;
+              return -10.0;
               // 低ポイント
             }else{
               if(playerRank[myId] != 1){
-                return -100.0;
+                return -300.0;
               }else{
                 return 0.0;
               }
@@ -837,10 +981,14 @@ class Lang{
           }else if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -1.0 : -5.0;
+              return -1.0;
               // 低ポイント
             }else{
-              return (hiddenCount <= 1)? -2.0 : -10.0;
+              if(highPointCount >= 3){
+                return -10.0;
+              }else{
+                return -5.0;
+              }
             }
             // 何も降っていない
           }else{
@@ -914,7 +1062,11 @@ class Lang{
               }
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? 1.0 : -2.0;
+              if(highPointCount >= 4){
+                return (hiddenCount == 0)? -1.0 : -10.0;
+              }else{
+                return (hiddenCount == 0)? 1.0 : -2.0;
+              }
             }
             // 1pt以上割り振っている
           }else if(pointThisTurn[myId] >= 1){
@@ -924,14 +1076,14 @@ class Lang{
                 if(sumPoint - point[myId] >= 8){
                   return -1.0;
                 }else{
-                  return (hiddenCount <= 1)? 2.0 : 1.0;
+                  return (hiddenCount <= 1)? 2.0 : -2.0;
                 }
               }else{
-                return (hiddenCount <= 1)? 2.0 : 1.0;
+                return (hiddenCount <= 1)? 2.0 : -5.0;
               }
               // 低スコア
             }else{
-              return (hiddenCount <= 1)? 1.0 : 0.3;
+              return (hiddenCount <= 1)? 1.0 : 0.0;
             }
             // 1ptも割り振っていない
           }else{
@@ -940,10 +1092,10 @@ class Lang{
               return (hiddenCount == 0)? -4.0 : -2.0;
               // 低スコア
             }else{
-              return (hiddenCount <= 1)? -0.5 : -1.0;
+              return (hiddenCount == 0)? -0.5 : -1.0;
             }
           }
-          // 7T
+          // 7T FSD2T7
         }else if(turn == 7){
           // 5pt割り振る
           if(pointThisTurn[myId] >= 5){
@@ -960,10 +1112,14 @@ class Lang{
               }
               // 低ポイント
             }else{
-              if(hiddenCount <= 2){
-                return (hiddenCount == 0)? -1.0 : BAN;
+              if(highPointCount <= 2){
+                if(originalPoint == 4){
+                  return (hiddenCount == 0)? -10.0 : BAN;
+                }else{
+                  return (hiddenCount == 0)? -20.0 : BAN;
+                }
               }else{
-                return (hiddenCount == 0)? -5.0 : BAN;
+                return (hiddenCount == 0)? -50.0 : BAN;
               }
             }
             // 4pt以上割り振る
@@ -981,11 +1137,11 @@ class Lang{
               }
               // 低ポイント
             }else{
-              if(hiddenCount <= 2){
-                if(highPointCount >= 3){
-                  return -100.0;
+              if(highPointCount <= 2){
+                if(hiddenCount >= 3){
+                  return BAN;
                 }else{
-                  return (hiddenCount == 0)? 0.0 : -5.0;
+                  return (hiddenCount == 0)? -5.0 : -50.0;
                 }
               }else{
                 return BAN;
@@ -1006,7 +1162,15 @@ class Lang{
               }
               // low score
             }else{
-              return (hiddenCount == 0)? 1.0 : -200.0;
+              if(highPointCount >= 3){
+                return (hiddenCount == 0)? -1.0 : BAN;
+              }else{
+                if(originalPoint == 4){
+                  return (hiddenCount == 0)? 1.0 : -200.0;
+                }else{
+                  return (hiddenCount == 0)? 0.0 : -400.0;
+                }
+              }
             }
             // 2pt以上割り振っている
           }else if(pointThisTurn[myId] >= 2){
@@ -1063,10 +1227,22 @@ class Lang{
               }else{
                 // 高ポイント
                 if(originalPoint >= 5){
-                  return (sumPoint <= 2)? 10.0 : -1000.0;
+                  if(highPointCount >= 4){
+                    return (sumPoint <= 2)? 0.0 : BAN;
+                  }else{
+                    return (sumPoint <= 2)? 10.0 : BAN;
+                  }
                   // 低いポイント
                 }else{
-                  return (sumPoint <= 2)? -1.0 : -2000.0;
+                  if(highPointCount >= 3){
+                    return BAN;
+                  }else{
+                    if(originalPoint == 4){
+                      return (sumPoint <= 1)? -1.0 : BAN;
+                    }else{
+                      return (sumPoint <= 1)? -2.0 : BAN;
+                    }
+                  }
                 }
               }
             }
@@ -1088,9 +1264,9 @@ class Lang{
                   // 3pt
                 }else{
                   if(highPointCount >= 4){
-                    return -1.0;
+                    return -10.0;
                   }else{
-                    return 1.0;
+                    return 0.0;
                   }
                 }
               }
@@ -1101,41 +1277,29 @@ class Lang{
               }else{
                 // 高ポイント
                 if(originalPoint >= 5){
-                  return (hiddenCount <= 1)? 1.0 : 1.5;
+                  return 1.0;
                   // 低いポイント
                 }else{
                   if(originalPoint == 4){
-                    return 4.0;
-                  }else{
                     return 1.0;
+                  }else{
+                    return 0.0;
                   }
                 }
               }
             }
+            // 0pt
           }else{
-            if(sumPoint == 0){
-              if(originalPoint >= 5){
-                return 100.0;
+            // 高ポイント
+            if(originalPoint >= 5){
+              if(originalPoint == 6){
+                return -6.0;
               }else{
-                if(scoreTypeCount[originalPoint] == 1){
-                  return 1.0;
-                }else{
-                  return 40.0;
-                }
+                return -5.0;
               }
+              // 低いポイント
             }else{
-              // 1ターン目の合計値が高い
-              if(sumPoint >= 8){
-                return -10.0;
-              }else{
-                // 高ポイント
-                if(originalPoint >= 5){
-                  return (hiddenCount <= 1)? 1.0 : 1.5;
-                  // 低いポイント
-                }else{
-                  return (hiddenCount <= 1)? 1.0 : 1.5;
-                }
-              }
+              return 1.0;
             }
           }
           // 4 turn FSD2T4
@@ -1144,10 +1308,22 @@ class Lang{
           if(pointThisTurn[myId] == 4){
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? 1.0 : -200.0;
+              if(highPointCount >= 4){
+                return (hiddenCount == 0)? -1.0 : BAN;
+              }else{
+                return (hiddenCount == 0)? 0.0 : BAN;
+              }
               // 低スコア
             }else{
-              return (hiddenCount == 0)? -10.0 : -100.0;
+              if(highPointCount >= 3){
+                return (hiddenCount == 0)? -50.0 : BAN;
+              }else{
+                if(originalPoint == 4){
+                  return (hiddenCount == 0)? -10.0 : BAN;
+                }else{
+                  return (hiddenCount == 0)? -40.0 : BAN;
+                }
+              }
             }
             // 2ptポイントを振っている
           }else if(pointThisTurn[myId] == 2){
@@ -1178,19 +1354,27 @@ class Lang{
           if(pointThisTurn[myId] == 4){
             // high point
             if(originalPoint >= 5){
-              return (sumPoint <= 2)? 1.0 : -20.0;
+              return (hiddenCount == 0)? 1.0 : BAN;
               // low point
             }else{
-              return (sumPoint <= 2)? 0.0 : -40.0;
+              if(highPointCount >= 3){
+                return (hiddenCount == 0)? 0.0 : BAN;
+              }else{
+                if(originalPoint == 4){
+                  return (hiddenCount == 0)? -10.0 : BAN;
+                }else{
+                  return (hiddenCount == 0)? -30.0 : BAN;
+                }
+              }
             }
             // 2pt以上ポイントを振っている
           }else if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? 1.0 : -20.0;
+              return (hiddenCount == 0)? 1.0 : -20.0;
               // 低ポイント
             }else{
-              return (hiddenCount <= 1)? 0.0 : -40.0;
+              return (hiddenCount == 0)? 0.0 : -40.0;
             }
             // 1ptも降っていない
           }else{
@@ -1202,7 +1386,7 @@ class Lang{
               return (hiddenCount <= 1)? 0.0 : -0.5;
             }
           }
-          // 6 2PT
+          // 6 2PT FSD2T6
         }else{
           // 4pt振っている
           if(pointThisTurn[myId] == 4){
@@ -1211,29 +1395,49 @@ class Lang{
               return (sumPoint <= 2)? 1.0 : -20.0;
               // low score
             }else{
-              if(highPointCount <= 3){
-                return (sumPoint <= 2)? -100.0 : -400.0;
+              if(highPointCount <= 2){
+                if(originalPoint == 4){
+                  return -200;  
+                }else{
+                  return BAN;
+                }
               }else{
-                return -500.0;
+                return BAN;
               }
             }
             // 2pt以上ポイントを振っている
           }else if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? 1.0 : 1.5;
+              return 1.0;
               // 低ポイント
             }else{
-              return (hiddenCount <= 1)? 0.2 : 0.5;
+              if(originalPoint == 4){
+                if(highPointCount >= 3){
+                  return -1.0;
+                }else{
+                  return 0.5;
+                }
+              }else{
+                if(highPointCount >= 3){
+                  return -10.0;
+                }else{
+                  return 0.2;
+                }
+              }
             }
             // 1ptも降っていない
           }else{
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -1.0 : -2.0;
+              return -1.0;
               // 低ポイント
             }else{
-              return (hiddenCount <= 1)? 0.0 : -0.5;
+              if(originalPoint == 4){
+                return 0.0;
+              }else{
+                return 1.0;
+              }
             }
           }
         }
@@ -1241,10 +1445,10 @@ class Lang{
          * 2位との差が1pt FSD1
          */
       }else if(diff == 1){
-        // 2 turn
+        // 2 turn FSD1T2
         if(turn == 2){
-          // 1pt以上割り振る
-          if(pointThisTurn[myId] >= 1){
+          // 2pt以上割り振る
+          if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
               // まだ場にポイントが無い
@@ -1256,13 +1460,21 @@ class Lang{
               // 低ポイント
             }else{
               if(sumPoint == 0){
-                return 20.0;
+                if(originalPoint == 4){
+                  return 20.0;
+                }else{
+                  return 10.0;
+                }
               }else{
                 // 高スコアが少ない
-                if(hiddenCount <= 2){
+                if(highPointCount <= 2){
                   return (sumPoint <= 2)? 0.0 : -100.0;
                 }else{
-                  return (sumPoint <= 1)? 2.0 : -100.0;
+                  if(originalPoint == 4){
+                    return (sumPoint <= 1)? -3.0 : -100.0;
+                  }else{
+                    return (sumPoint <= 1)? -4.0 : -100.0;
+                  }
                 }
               }
             }
@@ -1270,10 +1482,10 @@ class Lang{
           }else{
             // 高ポイント
             if(originalPoint >= 5){
-              if(highPointCount <= 3){
-                return -1.0;
+              if(highPointCount <= 2){
+                return -10.0;
               }else{
-                return 0.0;
+                return -5.0;
               }
               // 低ポイント
             }else{
@@ -1285,7 +1497,7 @@ class Lang{
               }
             }
           }
-          // 4 turn
+          // 4 turn FSD1T4
         }else if(turn == 4){
           // 4つのポイントを割り振った場合
           if(pointThisTurn[myId] >= 4){
@@ -1298,11 +1510,23 @@ class Lang{
                   return (hiddenCount == 0)? -10.0 : -1000.0;
                 }
               }else{
-                return (hiddenCount == 0)? -1.0 : -100.0;
+                return (hiddenCount == 0)? -10.0 : -100.0;
               }
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? -1.0 : -200.0;
+              if(highPointCount >= 3){
+                return BAN;
+              }else{
+                if(highPointCount >= 3){
+                  if(originalPoint == 4){
+                    return (hiddenCount == 0)? -500.0 : BAN;
+                  }else{
+                    return BAN;
+                  }
+                }else{
+                  return (hiddenCount == 0)? -200.0 : BAN;
+                }
+              }
             }
             // 2つのポイントを割り振った場合
           }else if(pointThisTurn[myId] >= 2){
@@ -1320,19 +1544,23 @@ class Lang{
               }
               // low score
             }else{
-              return (hiddenCount == 0)? 0.0 : -100.0;
+              if(highPointCount >= 3){
+                return (hiddenCount == 0)? -10.0 : BAN;
+              }else{
+                return (hiddenCount == 0)? -1.0 : -100.0;
+              }
             }
             // 何もポイントを振らない
           }else{
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -1.0 : -2.0;
+              return (hiddenCount <= 1)? -10.0 : -20.0;
               // 低スコア
             }else{
               return (hiddenCount == 0)? 0.5 : 0.2;
             }
           }
-          // 3 turn
+          // 3 turn FSD1T3
         }else if(turn == 3){
           // 4pt以上を割り振る
           if(pointThisTurn[myId] >= 4){
@@ -1351,7 +1579,11 @@ class Lang{
           }else if(pointThisTurn[myId] >= 3){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? -4.0 : -60.0;
+              if(highPointCount <= 2){
+                return (hiddenCount == 0)? -20.0 : -600.0;
+              }else{
+                return (hiddenCount == 0)? -10.0 : -300.0;
+              }
               // 低ポイント
             }else{
               return (hiddenCount == 0)? -8.0 : -120.0;
@@ -1385,6 +1617,13 @@ class Lang{
             }else{
               return BAN;
             }
+            // 4ptを割り振る
+          }else if(pointThisTurn[myId] == 4){
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -150.0 : BAN;
+            }else{
+              return BAN;
+            }
             // 3pt以上を割り振る
           }else if(pointThisTurn[myId] >= 3){
             if(originalPoint >= 5){
@@ -1408,7 +1647,7 @@ class Lang{
           }else{
             return (hiddenCount <= 1)? -1.0 : -2.0;
           }
-          // 6 turn
+          // 6 turn FSD1T6
         }else if(turn == 6){
           // 4pt振っている
           if(pointThisTurn[myId] >= 4){
@@ -1443,23 +1682,29 @@ class Lang{
             // 何も振っていない
           }else{
             if(originalPoint >= 5){
-              return (hiddenCount <= 1)? -5.0 : -10.0;
+              return -10.0;
             }else{
-              return (hiddenCount <= 1)? -1.0 : -2.0;
+              return -1.0;
             }
           }
-          // 8T 1pt
+          // 8T 1pt FSD1T8
         }else{
           // 4pt振っている
           if(pointThisTurn[myId] >= 4){
+            // high point
             if(originalPoint >= 5){
-              if(hiddenCount >= 4){
+              if(hiddenCount >= 3){
                 return BAN;
               }else{
-                return (hiddenCount == 0)? 0.0 : -200.0;
+                return (hiddenCount == 0)? 0.0 : -400.0;
               }
+              // low point
             }else{
-              return (hiddenCount == 0)? -2.0 : -500.0;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? -2.0 : BAN;
+              }else{
+                return (hiddenCount == 0)? -10.0 : BAN;
+              }
             }
             // 2pt振っている
           }else if(pointThisTurn[myId] >= 2){
@@ -1485,7 +1730,7 @@ class Lang{
          * 2位との差が0pt FSD0
          */
       }else{
-        // 8T
+        // 8T FSD0T8
         if(turn == 8){
           if(pointThisTurn[myId] == 4){
             // 高スコア
@@ -1493,16 +1738,28 @@ class Lang{
               return (hiddenCount == 0)? -400.0 : BAN;
               // 低スコア
             }else{
-              return (hiddenCount == 0)? -800.0 : BAN;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? -800.0 : BAN;
+              }else{
+                return BAN;
+              }
             }
             // 2pt以上割り振る
           }else if(pointThisTurn[myId] >= 2){
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? -1.0 : -20.0;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount == 0)? -1.0 : -40.0;
+              }
               // 低スコア
             }else{
-              return (hiddenCount == 0)? -3.0 : -60.0;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount == 0)? -3.0 : -100.0;
+              }
             }
             // 1ptも割り振らない
           }else{
@@ -1557,11 +1814,11 @@ class Lang{
               if(highPointCount <= 3){
                 return (hiddenCount == 0)? 0.0 : -200.0;
               }else{
-                return (hiddenCount == 0)? 0.0 : -100.0;
+                return (hiddenCount == 0)? 0.0 : -400.0;
               }
               // low point
             }else{
-              return -30.0;
+              return BAN;
             }
             // 2pt割り振る
           }else if(pointThisTurn[myId] == 2){
@@ -1589,7 +1846,7 @@ class Lang{
           }else{
             return (hiddenCount <= 1)? -1.0 : -2.0;
           }
-          // 2 turn
+          // 2 turn FSD0T2
         }else if(turn == 2){
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
@@ -1619,8 +1876,15 @@ class Lang{
             }else{
               return -300.0;
             }
+            // 0pt
           }else{
-            return (hiddenCount <= 1)? -1.0 : -2.0;
+            // high point
+            if(originalPoint >= 5){
+              return -4.0;
+              // low point
+            }else{
+              return 0.0;
+            }
           }
           // turn 3
         }else if(turn == 3){
@@ -1628,7 +1892,7 @@ class Lang{
           if(pointThisTurn[myId] >= 3){
             // 高ポイント
             if(originalPoint >= 5){
-              if(sumPoint - point[myId] >= 5){
+              if(sumPoint - point[myId] >= 4){
                 return BAN;
               }else{
                 return (hiddenCount == 0)? -1.0 : -80.0;
@@ -1667,14 +1931,26 @@ class Lang{
           }
           // 7 turn FSD0T7
         }else if(turn == 7){
-          // 4pt以上割り振る
-          if(pointThisTurn[myId] >= 4){
+          if(pointThisTurn[myId] == 5){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? -50.0 : -400.0;
+              if(highPointCount >= 4){
+                return BAN;
+              }else{
+                return (hiddenCount == 0)? -500.0 : BAN;
+              }
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? -100.0 : -800.0;
+              return BAN;
+            }
+            // 4pt以上割り振る
+          }else if(pointThisTurn[myId] >= 4){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -500.0 : BAN;
+              // 低ポイント
+            }else{
+              return (hiddenCount == 0)? -1000.0 : BAN;
             }
             // 3pt割り振る
           }else if(pointThisTurn[myId] >= 3){
@@ -1915,7 +2191,11 @@ class Lang{
             if(highPointCount >= 3){
               return (hiddenCount == 0)? -5.0 : -400.0;
             }else{
-              return (hiddenCount == 0)? -2.0 : -200.0;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? -2.0 : -200.0;
+              }else{
+                return (hiddenCount == 0)? -4.0 : -200.0;
+              }
             }
           }
           // 1pt以上割り振っている
@@ -1932,12 +2212,18 @@ class Lang{
             if(highPointCount >= 4){
               return (hiddenCount == 0)? -1.0 : -40.0;
             }else{
-              return (hiddenCount == 0)? 0.0 : -20.0;
+              return (hiddenCount == 0)? -1.0 : -20.0;
             }
           }
           // 1ptも割り振っていない
         }else{
-          return (hiddenCount <= 2)? 10.0 : 1.0;
+          // high point
+          if(originalPoint >= 5){
+            return (hiddenCount == 0)? 10.0 : -2.0;
+            // low point
+          }else{
+            return (hiddenCount <= 1)? 10.0 : 0.0;
+          }
         }
         /*
          * 2位とのスコア差が3pt FSLD3
@@ -2008,9 +2294,13 @@ class Lang{
               // 低ポイント
             }else{
               if(highPointCount <= 2){
-                return (hiddenCount <= 1)? 0.0 : -100.0;
+                return (hiddenCount == 0)? 0.0 : -200.0;
               }else{
-                return (hiddenCount <= 1)? 0.5 : BAN;
+                if(originalPoint == 4){
+                  return (hiddenCount == 0)? 0.5 : BAN;
+                }else{
+                  return (hiddenCount == 0)? 0.0 : BAN;
+                }
               }
             }
             // 1pt以上割り振っている
@@ -2037,17 +2327,21 @@ class Lang{
               }
               // 低ポイント
             }else{
-              return (hiddenCount <= 0)? 2.0 : 1.0;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? 2.0 : 1.0;
+              }else{
+                return (hiddenCount == 0)? 20.0 : 2.0;
+              }
             }
           }
-          // 9T
+          // 9T FSLD3T9
         }else{
           // 5pt割り振る
           if(pointThisTurn[myId] == 5){
             if(originalPoint >= 5){
               return (hiddenCount <= 1)? 1.0 : -100.0;
             }else{
-              return -BAN;
+              return BAN;
             }
             // 3pt以上割り振っている
           }else if(pointThisTurn[myId] >= 3){
@@ -2055,6 +2349,19 @@ class Lang{
               return (hiddenCount == 0)? 1.0 : -100.0;
             }else{
               return (hiddenCount == 0)? -1.0 : -200.0;
+            }
+            // 2pt割り振る
+          }else if(pointThisTurn[myId] == 2){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 3.0 : -100.0;
+              // 低ポイント
+            }else{
+              if(highPointCount <= 2){
+                return (hiddenCount == 0)? 0.0 : -10.0;
+              }else{
+                return (hiddenCount == 0)? -10.0 : -100.0;
+              }
             }
             // 1pt以上割り振っている
           }else if(pointThisTurn[myId] >= 1){
@@ -2066,7 +2373,7 @@ class Lang{
               if(highPointCount <= 2){
                 return (hiddenCount <= 1)? 0.0 : -1.0;
               }else{
-                return (hiddenCount <= 1)? 1.0 : 0.0;
+                return (hiddenCount <= 1)? 0.0 : 1.0;
               }
             }
             // 1ptも割り振っていない
@@ -2080,7 +2387,11 @@ class Lang{
               }
               // 低ポイント
             }else{
-              return (hiddenCount <= 0)? 2.0 : 1.0;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? 2.0 : 1.0;
+              }else{
+                return (hiddenCount == 0)? 10.0 : 1.0;
+              }
             }
           }
         }
@@ -2099,11 +2410,15 @@ class Lang{
                 return (hiddenCount == 0)? -10.0 : BAN;
               }
             }else{
-              return (hiddenCount <= 2)? -20.0 : -1600.0;
+              return (hiddenCount == 0)? -20.0 : BAN;
             }
             // 低ポイント
           }else{
-            return (hiddenCount <= 1)? -20.0 : -600.0;
+            if(originalPoint == 4){
+              return (hiddenCount == 0)? -100.0 : BAN;
+            }else{
+              return (hiddenCount == 0)? -200.0 : BAN;
+            }
           }
           // 4pt以上割り振っている
         }else if(pointThisTurn[myId] >= 4){
@@ -2119,7 +2434,7 @@ class Lang{
             if(highPointCount <= 2){
               return (hiddenCount == 0)? -50.0 : BAN;
             }else{
-              return (hiddenCount == 0)? -100.0 : BAN;
+              return (hiddenCount == 0)? -300.0 : BAN;
             }
           }
           // 3pt以上割り振っている
@@ -2133,7 +2448,11 @@ class Lang{
                 return (hiddenCount == 0)? 0.0 : -200.0;
               }
             }else{
-              return (hiddenCount <= 2)? 0.0 : -2.0;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount == 0)? -2.0 : BAN;
+              }
             }
             // 低ポイント
           }else{
@@ -2149,14 +2468,22 @@ class Lang{
           if(originalPoint >= 5){
             // 最初のスコア計算
             if(turn == 5){
-              return (hiddenCount <= 1)? 1.0 : -100.0;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount <= 1)? 1.0 : -100.0;
+              }
             }else{
-              return (hiddenCount <= 1)? 1.0 : -200.0;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount <= 1)? 1.0 : -200.0;
+              }
             }
             // 低ポイント
           }else{
             if(hiddenCount >= 2){
-              return -20.0;
+              return -200.0;
             }else{
               if(highPointCount >= 3){
                 return (hiddenCount == 0)? -1.0 : -200.0;
@@ -2172,9 +2499,17 @@ class Lang{
           if(originalPoint >= 5){
             // 最初のスコア計算
             if(turn == 5){
-              return (hiddenCount <= 1)? 1.0 : 0.5;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount == 0)? 1.0 : -10.0;
+              }
             }else{
-              return (hiddenCount <= 1)? 1.0 : 0.5;
+              if(hiddenCount >= 3){
+                return BAN;
+              }else{
+                return (hiddenCount <= 1)? 1.0 : -20.0;
+              }
             }
             // 低ポイント
           }else{
@@ -2283,14 +2618,19 @@ class Lang{
           // 高ポイント
           if(originalPoint >= 5){
             if(hiddenCount >= 3){
-              return -100.0;
+              return BAN;
             }else{
               return (hiddenCount == 0)? 1.0 : -100.0;
             }
             // 低ポイント
           }else{
-            return (hiddenCount == 0)? 2.0 : -20.0;
+            if(hiddenCount >= 3){
+              return BAN;
+            }else{
+              return (hiddenCount == 0)? 2.0 : -200.0;
+            }
           }
+          // 0pt
         }else{
           if(pointThisTurn[myId] >= 1){
             return (hiddenCount <= 2)? 0.7 : 0.3;
@@ -2328,7 +2668,7 @@ class Lang{
               if(hiddenCount >= 3){
                 return BAN;
               }else{
-                return (hiddenCount <= 1)? -200.0 : -800.0;
+                return (hiddenCount == 0)? -300.0 : -1000.0;
               }
             }else{
               return (hiddenCount <= 1)? 0.0 : -200.0;
@@ -2538,7 +2878,7 @@ class Lang{
             }else{
               return (sumPoint >= 10)? 2000.0 : 100;
             }
-          // 何も割り振らない
+            // 何も割り振らない
           }else{
             if(originalPoint >= 5){
               return 10;
@@ -2555,7 +2895,7 @@ class Lang{
             }else{
               return 400.0;
             }
-          // 何も割り振らない
+            // 何も割り振らない
           }else{
             if(originalPoint >= 5){
               return 10.0;
@@ -2602,7 +2942,11 @@ class Lang{
               if(highPointCount >= 3){
                 return 1000.0;
               }else{
-                return 500.0;
+                if(originalPoint == 4){
+                  return 1000.0;
+                }else{
+                  return 500.0;
+                }
               }
             }
             // 1ptも割り振っていない
@@ -2634,10 +2978,10 @@ class Lang{
           if(pointThisTurn[myId] >= 3){
             // high point
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? 20.0 : 500.0;
+              return (hiddenCount == 0)? 100.0 : -BAN;
               // low point
             }else{
-              return (hiddenCount == 0)? 40.0 : 1000.0;
+              return (hiddenCount == 0)? 400.0 : -BAN;
             }
             // 1pt以上割り振っている
           }else if(pointThisTurn[myId] >= 1){
@@ -2681,29 +3025,45 @@ class Lang{
        * 最下位との差が5pt FND5
        */
       if(diff >= 5){
-        // 7 turn
+        // 7 turn FND5T7
         if(turn == 7){
-          // 高ポイント
-          if(originalPoint >= 5){
-            return (hiddenCount <= 2)? 10.0 : 50.0;
-            // 低ポイント
+          // 1pt以上割り振る
+          if(pointThisTurn[myId] >= 1){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount <= 2)? 10.0 : 50.0;
+              // 低ポイント
+            }else{
+              return (hiddenCount <= 2)? 20.0 : 100.0;
+            }
+          // 0pt
           }else{
-            return (hiddenCount <= 2)? 20.0 : 100.0;
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? 0.0 : 50.0;
+              // 低ポイント
+            }else{
+              return (hiddenCount <= 1)? 0.0 : 100.0;
+            }
           }
-          // 3 turn
+          // 3 turn FND5T3
         }else if(turn == 3){
+          // high point
           if(originalPoint >= 5){
             return (hiddenCount <= 2)? 0.0 : 0.15;
+            // low point
           }else{
             return (hiddenCount <= 2)? 0.0 : 0.15;
           }
-          // 8 turn
+          // 8 turn FND5T8
         }else if(turn == 8){
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
             // 高スコア
             if(originalPoint >= 5){
               if(diff >= 7){
+                return -BAN;
+              }else if(diff >= 6 && hiddenCount <= 1){
                 return -BAN;
               }else if(highPointCount >= 3){
                 return (hiddenCount <= 1)? 1.0 : 20.0;
@@ -2820,7 +3180,7 @@ class Lang{
           }else{
             return (hiddenCount <= 2)? 0.0 : 0.25;
           }
-          // 6 turn
+          // 6 turn FND4T6
         }else if(turn == 6){
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
@@ -2843,14 +3203,30 @@ class Lang{
               // 低ポイント
             }else{
               if(highPointCount <= 2){
-                return (hiddenCount <= 1)? 2.0 : 20.0;
+                if(originalPoint == 4){
+                  return 10.0;
+                }else{
+                  return 20.0;
+                }
               }else{
-                return (hiddenCount <= 1)? 4.0 : 40.0;
+                if(originalPoint == 4){
+                  return 20.0;
+                }else{
+                  return 40.0;
+                }
               }
             }
             // 1ptも割り振らない
           }else{
-            return (hiddenCount <= 2)? 0.0 : 0.25;
+            if(originalPoint >= 5){
+              return 0.0;
+            }else{
+              if(highPointCount >= 3){
+                return -2.0;
+              }else{
+                return -1.0;
+              }
+            }
           }
           // 8 turn
         }else if(turn == 8){
@@ -2888,8 +3264,15 @@ class Lang{
                 return (hiddenCount == 0)? 10.0 : 100.0;
               }
             }
+            // 0pt
           }else{
-            return (hiddenCount <= 2)? 0.0 : 0.25;
+            // high point
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? -1.0 : 0.25;
+              // low point
+            }else{
+              return (hiddenCount <= 1)? -2.0 : 0.25;
+            }
           }
         }else if(turn == 4){
           if(pointThisTurn[myId] == 4){
@@ -2916,7 +3299,24 @@ class Lang{
       }else if(diff >= 3){
         // 3 turn
         if(turn == 3){
-          return (hiddenCount <= 2)? 0.0 : 0.35;
+          // 3pt以上割り振る
+          if(pointThisTurn[myId] >= 3){
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 1.0 : 10.0;
+            }else{
+              return (hiddenCount == 0)? 5.0 : 50.0;
+            }
+          // 1pt以上割り振る
+          }else if(pointThisTurn[myId] >= 1){
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 0.0 : 1.0;
+            }else{
+              return (hiddenCount == 0)? 0.0 : 2.0;
+            }
+          // 何も割り振らない
+          }else{
+            return (hiddenCount <= 2)? 0.0 : 0.35;
+          }
           // 7 turn
         }else if(turn == 7){
           if(originalPoint >= 5){
@@ -2929,7 +3329,7 @@ class Lang{
             if(sumPoint - point[myId] >= 15){
               return (hiddenCount == 0)? 20.0 : 200.0;
             }else{
-              return (hiddenCount <= 2)? 10.0 : 100.0;
+              return (hiddenCount == 0)? 1.0 : 20.0;
             }
           }
           // 6T
@@ -2951,10 +3351,14 @@ class Lang{
           }else if(pointThisTurn[myId] == 2){
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? 1.0 : 0.0;
+              return 1.0;
               // 低スコア
             }else{
-              return (hiddenCount == 0)? 2.0 : 5.0;
+              if(highPointCount >= 3){
+                return 10.0;
+              }else{
+                return 2.0;
+              }
             }
             // 何もptを振らない
           }else{
@@ -3063,16 +3467,25 @@ class Lang{
          * 最下位との差が2pt FND2
          */
       }else if(diff >= 2){
-        // 7 turn
+        // 7 turn FND2T7
         if(turn == 7){
-          // 3pt以上割り振っている
-          if(pointThisTurn[myId] >= 3){
+          // 5pt割り振る
+          if(pointThisTurn[myId] == 5){
             // 高ポイント
             if(originalPoint >= 5){
-              return (hiddenCount == 0)? 50.0 : 100.0;
+              return (hiddenCount == 0)? 50.0 : -BAN;
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? 100.0 : 200.0;
+              return (hiddenCount == 0)? 100.0 : -BAN;
+            }
+            // 3pt以上割り振っている
+          }else if(pointThisTurn[myId] >= 3){
+            // 高ポイント
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 50.0 : 300.0;
+              // 低ポイント
+            }else{
+              return (hiddenCount == 0)? 100.0 : 800.0;
             }
             // 2pt以上割り振っている
           }else if(pointThisTurn[myId] >= 2){
@@ -3142,7 +3555,7 @@ class Lang{
           }else{
             return (hiddenCount <= 1)? 0.0 : 0.9;
           }
-          // 6 turn
+          // 6 turn FND2T6
         }else if(turn == 6){
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
@@ -3167,20 +3580,30 @@ class Lang{
             }
             // 2pt以上割り振る
           }else if(pointThisTurn[myId] >= 2){
+            // high point
             if(originalPoint >= 5){
               if(sumPoint >= 15){
-                return (hiddenCount <= 1)? 2.0 : 10.0;
+                return 2.0;
               }else{
-                return (hiddenCount <= 1)? 0.0 : 1.0;
+                return 0.0;
               }
+              // low point
             }else{
-              return (hiddenCount <= 1)? 2.0 : 10.0;
+              if(originalPoint == 4){
+                return 2.0;
+              }else{
+                if(highPointCount >= 3){
+                  return 8.0;
+                }else{
+                  return 4.0;
+                }
+              }
             }
             // 1ptも割り振らない
           }else{
             return (hiddenCount <= 1)? 0.0 : 0.9;
           }
-          // 8 turn
+          // 8 turn FND2T8
         }else if(turn == 8){
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
@@ -3255,20 +3678,20 @@ class Lang{
               return (hiddenCount == 0)? 0.0 : 1.0;
             }
           }
-          // 4 turn
+          // 4 turn FND1T4
         }else if(turn == 4){
           // 2pt以上振っている
           if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
               if(hiddenCount >= 3){
-                return 100.0;
+                return -BAN;
               }else{
-                return (hiddenCount == 0)? 2.0 : 20.0;
+                return (hiddenCount == 0)? 2.0 : 100.0;
               }
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? 4.0 : 40.0;
+              return (hiddenCount == 0)? 10.0 : 400.0;
             }
             // 何も振っていない
           }else{
@@ -3299,7 +3722,7 @@ class Lang{
           }else{
             return (hiddenCount == 0)? 0.0 : 1.0;
           }
-          // 6 turn
+          // 6 turn FND1T6
         }else if(turn == 6){
           // 4pt割り振る
           if(pointThisTurn[myId] == 4){
@@ -3327,10 +3750,10 @@ class Lang{
             // 高ポイント
             if(originalPoint >= 5){
               if(sumPoint - point[myId] >= 12){
-                return 200.0;
+                return 400.0;
               }else{
                 if(topPoint - point[myId] >= 1){
-                  return 100.0;
+                  return 200.0;
                 }else{
                   return 0.0;
                 }
@@ -3401,10 +3824,18 @@ class Lang{
        * 最下位との点差が5pt FNLD5
        */
       if(diff >= 5){
+        // 1pt以上割り振る
         if(pointThisTurn[myId] >= 1){
-          return (hiddenCount <= 4)? 10.0 : 100.0;
+          // high point
+          if(originalPoint >= 5){
+            return (hiddenCount <= 1)? 10.0 : 100.0;
+          // low point
+          }else{
+            return (hiddenCount <= 1)? 100.0 : 50.0;
+          }
+        // 0pt
         }else{
-          return (hiddenCount <= 4)? 0.0 : 10.0;
+          return (hiddenCount <= 1)? 1.0 : 10.0;
         }
         /*
          * 最下位との点差が4pt FNLD4
@@ -3424,7 +3855,7 @@ class Lang{
             if(topDiff >= 5){
               return -BAN;
             }else{
-              return (hiddenCount <= 2)? 4.0 : 80.0;
+              return (hiddenCount <= 1)? 40.0 : -BAN;
             }
           }
           // 1pt以上割り当て
@@ -3439,14 +3870,26 @@ class Lang{
       }else if(diff == 3){
         // 5 turn
         if(turn == 5){
-          // 3pt以上割り振る
-          if(pointThisTurn[myId] >= 3){
+          if(pointThisTurn[myId] == 5){
             // 高ポイント
             if(originalPoint >= 5){
               if(highPointCount >= 4){
-                return (hiddenCount <= 2)? 10.0 : 800.0;
+                return (hiddenCount == 0)? 100.0 : 800.0;
               }else{
-                return (hiddenCount <= 2)? 2.0 : 400.0;
+                return (hiddenCount == 0)? 50.0 : 400.0;
+              }
+              // 低ポイント
+            }else{
+              return (hiddenCount == 0)? 300.0 : -BAN;
+            }
+            // 3pt以上割り振る
+          }else if(pointThisTurn[myId] >= 3){
+            // 高ポイント
+            if(originalPoint >= 5){
+              if(highPointCount >= 4){
+                return (hiddenCount == 0)? 2.0 : -BAN;
+              }else{
+                return (hiddenCount == 0)? 10.0 : -BAN;
               }
               // 低ポイント
             }else{
@@ -3507,7 +3950,6 @@ class Lang{
          * 高いほど悪い評価
          */
       }else if(diff == 2){
-        // 4pt以上割り振る
         if(pointThisTurn[myId] >= 4){
           // 高スコア
           if(originalPoint >= 5){
@@ -3533,30 +3975,36 @@ class Lang{
                 if(sumPoint >= 30){
                   return (hiddenCount == 0)? 10.0 : 200.0;
                 }else{
-                  if(highPointCount <= 3){
-                    return (hiddenCount == 0)? 0.0 : 200.0;
+                  if(highPointCount <= 2){
+                    return (hiddenCount == 0)? 0.0 : 500.0;
                   }else{
-                    return (hiddenCount == 0)? 0.0 : 400.0;
+                    return (hiddenCount == 0)? 0.0 : 1000.0;
                   }
                 }
               }
             }
             // 低スコア
           }else{
-            return (hiddenCount == 0)? 20.0 : 200.0;
+            if(originalPoint == 4){
+              return (hiddenCount == 0)? 100.0 : -BAN;
+            }else{
+              return (hiddenCount == 0)? 200.0 : -BAN;
+            }
           }
           // 3pt割り振る
         }else if(pointThisTurn[myId] == 3){
           // 高スコア
           if(originalPoint >= 5){
-            if(highPointCount <= 3){
+            if(hiddenCount >= 3){
+              return -BAN;
+            }else if(highPointCount <= 3){
               return (hiddenCount == 0)? 1.0 : 300.0;
             }else{
               return (hiddenCount == 0)? 0.0 : 200.0;
             }
             // 低スコア
           }else{
-            return (hiddenCount == 0)? 0.0 : 200.0;
+            return (hiddenCount == 0)? 0.0 : -BAN;
           }
           // 2pt以上割り振る
         }else if(pointThisTurn[myId] >= 2){
@@ -3569,7 +4017,15 @@ class Lang{
             }
             // 低スコア
           }else{
-            return (hiddenCount == 0)? 0.0 : 200.0;
+            if(originalPoint == 4){
+              return (hiddenCount == 0)? 0.0 : 200.0;
+            }else{
+              if(highPointCount >= 3){
+                return (hiddenCount == 0)? 5.0 : 200.0;
+              }else{
+                return (hiddenCount == 0)? 0.0 : 200.0;
+              }
+            }
           }
           // 1pt以上割り振る
         }else if(pointThisTurn[myId] >= 1){
@@ -3631,14 +4087,18 @@ class Lang{
         if(pointThisTurn[myId] >= 4){
           // 高スコア
           if(originalPoint >= 5){
-            return (hiddenCount == 0)? 100.0 : -BAN;
+            return (hiddenCount == 0)? 300.0 : -BAN;
             // 低スコア
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
-              return (hiddenCount == 0)? 400.0 : -BAN;
+              if(turn == 5){
+                return (hiddenCount == 0)? 1000.0 : -BAN;
+              }else{
+                return -BAN;
+              }
             }else{
-              return (hiddenCount == 0)? 400.0 : -BAN;
+              return -BAN;
             }
           }
           // 3pt以上割り振る
@@ -3650,9 +4110,13 @@ class Lang{
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
-              return (hiddenCount <= 2)? 2.0 : 8.0;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? 20.0 : 80.0;
+              }else{
+                return (hiddenCount == 0)? 30.0 : 160.0;
+              }
             }else{
-              return (hiddenCount <= 2)? 10.0 : 50.0;
+              return (hiddenCount == 0)? 100.0 : 500.0;
             }
           }
           // 2pt以上割り振る
@@ -3662,15 +4126,15 @@ class Lang{
             if(hiddenCount >= 3){
               return -BAN;
             }else{
-              return (hiddenCount <= 1)? 2.0 : 40.0;
+              return (hiddenCount == 0)? 2.0 : 200.0;
             }
             // 低スコア
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
-              return (hiddenCount <= 2)? 1.0 : 4.0;
+              return (hiddenCount == 0)? 1.0 : 200.0;
             }else{
-              return (hiddenCount <= 2)? 1.0 : 2.0;
+              return (hiddenCount == 0)? 2.0 : 400.0;
             }
           }
           // 1pt割り振る
@@ -3690,9 +4154,9 @@ class Lang{
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
-              return (hiddenCount <= 2)? 1.0 : 4.0;
+              return (hiddenCount == 0)? 1.0 : 20.0;
             }else{
-              return (hiddenCount <= 2)? 20.0 : 60.0;
+              return (hiddenCount == 0)? 20.0 : 100.0;
             }
           }
           // 何も割り振らない
@@ -3749,9 +4213,24 @@ class Lang{
 
       if(worstPlayer == id){
         if(isLastDay()){
-          // 1pt以上割り振る
-          if(pointThisTurn[myId] >= 2){
+          // 最後のターン
+          if(turn == 9){
+            if(pointThisTurn[myId] >= 1){
+              return BIGBAN;
+            }else{
+              return 0.0;
+            }
+            // 5 turn
+            // 2pt以上割り振る
+          }else if(pointThisTurn[myId] >= 2){
             return -(attention / worstSameCount) * 1000.0;
+            // 1pt割り振る
+          }else if(pointThisTurn[myId] == 1){
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -100 : BAN;
+            }else{
+              return (hiddenCount == 0)? -500 : BAN;
+            }
             // 0pt割り振る
           }else{
             if(originalPoint >= 5){
@@ -3990,12 +4469,10 @@ class Tutorial{
 
         double score = calcScore(myId);
 
-        if(score > BAN * 0.1){
-          PickUpList pick;
-          pick.score = score;
-          pick.list = data;
-          que.push(pick);
-        }
+        PickUpList pick;
+        pick.score = score;
+        pick.list = data;
+        que.push(pick);
 
         subPoint(myId, data);
 
@@ -4018,12 +4495,10 @@ class Tutorial{
 
         double score = calcScore(myId); 
 
-        if(score > BAN * 0.1){
-          PickUpList pick;
-          pick.score = score;
-          pick.list = data;
-          que.push(pick);
-        }
+        PickUpList pick;
+        pick.score = score;
+        pick.list = data;
+        que.push(pick);
 
         subPoint(myId, data, 2);
 
