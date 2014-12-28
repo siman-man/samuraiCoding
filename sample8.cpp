@@ -3160,13 +3160,14 @@ class Lang{
             }else{
               return (hiddenCount <= 2)? 10.0 : 5.0;
             }
+            // 0pt
           }else{
             // 高スコア
             if(originalPoint >= 5){
-              return (hiddenCount <= 2)? 0.0 : 0.15;
+              return (hiddenCount == 0)? -5.0 : 0.15;
               // 低スコア
             }else{
-              return (hiddenCount <= 2)? 0.0 : 0.15;
+              return (hiddenCount == 0)? -10.0 : 0.15;
             }
           }
           // 6 turn
@@ -3251,7 +3252,11 @@ class Lang{
             }
             // 1ptも割り振らない
           }else{
-            return (hiddenCount <= 2)? 0.0 : 0.25;
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? -1.0 : 0.5;
+            }else{
+              return (hiddenCount == 0)? -2.0 : 0.25;
+            }
           }
           // 6 turn FND4T6
         }else if(turn == 6){
