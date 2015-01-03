@@ -4780,13 +4780,14 @@ class Lang{
           }
         // 7 turn FND1T7
         }else if(turn == 7){
+          // 4pt以上割り振る
           if(pointThisTurn[myId] >= 4){
             // 高ポイント
             if(originalPoint >= 5){
               return (hiddenCount == 0)? 50.0 : -BAN;
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? 100.0 : -BAN;
+              return -BAN;
             }
             // 2pt以上割り振っている
           }else if(pointThisTurn[myId] >= 2){
@@ -4795,16 +4796,31 @@ class Lang{
               return (hiddenCount == 0)? 10.0 : -BAN;
               // 低ポイント
             }else{
-              return (hiddenCount == 0)? 20.0 : -BAN;
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? 20.0 : -BAN;
+              }else{
+                return (hiddenCount == 0)? 40.0 : -BAN;
+              }
             }
             // 1ptも割り振っていない
           }else{
-            return (hiddenCount == 0)? 0.0 : 1.0;
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? 5.0 : 20.0;
+            }else{
+              return (hiddenCount == 0)? 0.0 : 10.0;
+            }
           }
-          // 8 turn
+        // 8 turn FND1T8
         }else{
+          // 4pt割り振る
+          if(pointThisTurn[myId] == 4){
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 500 : -BAN;
+            }else{
+              return -BAN;
+            }
           // 2pt以上割り振っている
-          if(pointThisTurn[myId] >= 2){
+          }else if(pointThisTurn[myId] >= 2){
             // 高ポイント
             if(originalPoint >= 5){
               return (hiddenCount == 0)? 5.0 : -BAN;
@@ -4814,7 +4830,15 @@ class Lang{
             }
             // 1ptも割り振っていない
           }else{
-            return (hiddenCount == 0)? 0.0 : 1.0;
+            if(originalPoint >= 5){
+              return (hiddenCount <= 1)? 5.0 : 20.0;
+            }else{
+              if(originalPoint == 4){
+                return (hiddenCount == 0)? 1.0 : 10.0;
+              }else{
+                return (hiddenCount == 0)? 0.0 : 20.0;
+              }
+            }
           }
         }
       }else{
