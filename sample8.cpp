@@ -5177,7 +5177,7 @@ class Lang{
         if(pointThisTurn[myId] >= 4){
           // 高スコア
           if(originalPoint >= 5){
-            return (hiddenCount == 0)? 300.0 : -BAN;
+            return (hiddenCount == 0)? 400.0 : -BAN;
           // 低スコア
           }else{
             return -BAN;
@@ -5186,21 +5186,21 @@ class Lang{
         }else if(pointThisTurn[myId] >= 3){
           // 高スコア
           if(originalPoint >= 5){
-            return (hiddenCount == 0)? 10.0 : 1000.0;
-            // 低スコア
+            return (hiddenCount == 0)? 100.0 : -BAN;
+          // 低スコア
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
               if(originalPoint == 4){
                 return (hiddenCount == 0)? 20.0 : 80.0;
               }else{
-                return (hiddenCount == 0)? 30.0 : 160.0;
+                return (hiddenCount == 0)? 40.0 : 200.0;
               }
             }else{
-              return (hiddenCount == 0)? 100.0 : 500.0;
+              return -BAN;
             }
           }
-          // 2pt以上割り振る
+        // 2pt以上割り振る FNLD1
         }else if(pointThisTurn[myId] >= 2){
           // 高スコア
           if(originalPoint >= 5){
@@ -5209,16 +5209,16 @@ class Lang{
             }else{
               return (hiddenCount == 0)? 2.0 : 200.0;
             }
-            // 低スコア
+          // 低スコア
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
-              return (hiddenCount == 0)? 1.0 : 200.0;
+              return (hiddenCount == 0)? 1.0 : 400.0;
             }else{
-              return (hiddenCount == 0)? 2.0 : 400.0;
+              return (hiddenCount == 0)? 2.0 : 800.0;
             }
           }
-          // 1pt割り振る
+        // 1pt割り振る
         }else if(pointThisTurn[myId] >= 1){
           // 高スコア
           if(originalPoint >= 5){
@@ -5231,18 +5231,22 @@ class Lang{
                 return (hiddenCount == 0)? 10.0 : 600.0;
               }
             }
-            // 低スコア
+          // 低スコア
           }else{
             // 高スコアが少ない
             if(highPointCount <= 2){
-              return (hiddenCount == 0)? 1.0 : 20.0;
+              return (hiddenCount == 0)? 1.0 : 200.0;
             }else{
-              return (hiddenCount == 0)? 20.0 : 100.0;
+              return (hiddenCount == 0)? 20.0 : 500.0;
             }
           }
-          // 何も割り振らない
+        // 何も割り振らない FNLD1
         }else{
-          return (hiddenCount <= 1)? 5.0 : 20.0;
+          if(originalPoint >= 5){
+            return (hiddenCount == 0)? 10.0 : 30.0;
+          }else{
+            return (hiddenCount <= 1)? 2.0 : 10.0;
+          }
         }
       }else{
         return 1.0;
