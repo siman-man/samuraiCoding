@@ -3677,6 +3677,7 @@ class Lang{
               return 1.5;
             }
           }
+        // 8 turn FWD0T8
         }else if(turn == 8){
           // 2pt以上割り振っている
           if(pointThisTurn[myId] >= 2){
@@ -3699,7 +3700,30 @@ class Lang{
               return 5.0;
             }
           }
-        // 2 or 3 turn FWD0
+        // 2 turn FWD0T2
+        }else if(turn == 2){
+          // 2pt以上割り振っている
+          if(pointThisTurn[myId] >= 2){
+            // high point
+            if(originalPoint >= 5){
+              return (hiddenCount == 0)? 10.0 : 100.0;
+              // low point
+            }else{
+              return (hiddenCount == 0)? 20.0 : 200.0;
+            }
+            // 1ptも割り振らない
+          }else{
+            if(originalPoint >= 5){
+              return 10.0;
+            }else{
+              if(originalPoint == 4){
+                return 5.0;
+              }else{
+                return 2.0;
+              }
+            }
+          }
+        // 3 turn FWD0
         }else{
           // 1pt以上割り振っている
           if(pointThisTurn[myId] >= 1){
@@ -3712,7 +3736,15 @@ class Lang{
             }
             // 1ptも割り振らない
           }else{
-            return 0.5;
+            if(originalPoint >= 5){
+              return 5.0;
+            }else{
+              if(originalPoint == 4){
+                return 1.0;
+              }else{
+                return 0.0;
+              }
+            }
           }
         }
       }
