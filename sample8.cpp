@@ -2584,9 +2584,9 @@ class Lang{
             }
           }
         }
-        /*
-         * 2位とのスコア差が4pt FSLD4
-         */
+      /*
+       * 2位とのスコア差が4pt FSLD4
+       */
       }else if(diff == 4){
         // 4pt以上割り振っている
         if(pointThisTurn[myId] >= 4){
