@@ -245,7 +245,7 @@ class Battle
   end
 
   def show_result
-    $stderr.puts "total: #{@attention_list.inject(:+)} - #{@attention_list.sort.join(' ')}"
+    $stderr.puts "total: #{@attention_list.inject(:+)} - #{@attention_list.join(' ')}"
     @ais.sort_by{|ai| -ai.score }.each.with_index(1) do |ai, rank|
       puts "name:#{ai.name}\tscore:#{ai.score}\tranking:#{rank}"
     end
