@@ -31,7 +31,7 @@ end
 
 class Battle
   def initialize(cflag)
-    @participant = ['siman', 'sample8', 'sample9', 'sample6']
+    @participant = ['sample5', 'sample8', 'sample9', 'sample6']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
