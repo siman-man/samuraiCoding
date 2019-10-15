@@ -8,6 +8,11 @@ task :zip do
   `ruby zip.rb`
 end
 
+task :b do
+  res = `ruby battle.rb`
+  puts res
+end
+
 task :battle do
   res = `ruby battle.rb`
   puts res
