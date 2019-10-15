@@ -22,6 +22,8 @@ end
 
 line_num = line_num / 4.0
 
+player.delete(nil)
+
 player.each do |name, data|
   puts "#{name}:\tAvarage Score: #{data['score']/line_num},\tAvarage Ranking: #{data['ranking']/line_num}\tTop Count: #{data['top_count']}"
 end

@@ -739,7 +739,8 @@ class Tutorial{
        * 自分のリアルポイントの更新
        */
       for(int n = 0; n < N; n++){
-        cin >> langList[0].point[n];
+        //cin >> langList[0].point[n];
+        cin >> langList[n].point[MY_ID];
       }
     }
 
