@@ -1,7 +1,11 @@
 File.open('result.txt', 'w') do |file|
-  10.times do |i|
+  100.times do |i|
     puts "#{i+1} times"
-    res = `ruby battle.rb`
+    if i.zero?
+      res = `ruby battle.rb COMPILE`
+    else
+      res = `ruby battle.rb`
+    end
     file.puts res.chomp
   end
 end

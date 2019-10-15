@@ -1,4 +1,4 @@
-@filename='siman'
+@filename='sample8'
 
 task :default do
   `g++ -W -Wall -Wno-sign-compare -O2 -o #{@filename} #{@filename}.cpp`
@@ -6,6 +6,11 @@ end
 
 task :zip do
   `ruby zip.rb`
+end
+
+task :b do
+  res = `ruby battle.rb`
+  puts res
 end
 
 task :battle do

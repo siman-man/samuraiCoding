@@ -38,8 +38,6 @@ int turn = 0;
 int division;
 int card_list[6] = { 0, 1, 2, 3, 4, 5 };
 int leaning[TOP * TDIFF * LDIFF * DIVISION * POINT * TURN * HIDE * SCORE];
-vector<int> idList(6,0);
-vector<int> bestIdList(6,0);
 
 //======================================================================================//
 //     next_combination
@@ -235,7 +233,6 @@ class Lang{
       int tdptlhs = TURN * dptlhs;
 
       int pid = (top * (tdptlhs)) + ((turn-1) * (dptlhs)) + (division * (ptlhs)) + (point * tlhs) + (min(TDIFF-1, tdiff) * lhs) + (min(LDIFF-1, ldiff) * hs) + (min(HIDE-1, hiddenCount) * s) + (originalPoint-3);
-      idList[id] = pid;
 
       return pid;
     }
@@ -380,7 +377,6 @@ class Lang{
 
 struct PickUpList {
   vector<int> list;
-  vector<int> idList;
   double score;
 
   bool operator >(const PickUpList &e) const{
@@ -397,13 +393,13 @@ class Tutorial{
   public:
     void allBefore(){
       string str;
-      ifstream ifs("leaning.txt");
+      ifstream ifs("sample9leaning.txt");
 
       if(ifs.fail()){
         fprintf(stderr, "Failed\n");
         cout << "Failed" << endl;
       }
-
+  
       int i = 0;
       int score;
       while(getline(ifs, str)){
@@ -411,6 +407,7 @@ class Tutorial{
         leaning[i] = score;
         i++;
       }
+
     }
 
     void init(){
@@ -517,6 +514,22 @@ class Tutorial{
           langList[i].hiddenCount = 0;
         }
       }
+
+      vector<PickUpList> p1list = selectHiddenPick(1, 2, 2, list);
+      vector<PickUpList> p2list = selectHiddenPick(2, 2, 2, list);
+      vector<PickUpList> p3list = selectHiddenPick(3, 2, 2, list);
+
+      vector<int> p1 = p1list[0].list;
+      vector<int> p2 = p2list[0].list;
+      vector<int> p3 = p3list[0].list;
+
+      double expectScore = calcExpectScore(hiddenCount);
+
+      for(int i = 0; i < 2; i++){
+        expectPoint[1][p1[i]] += expectScore;
+        expectPoint[2][p2[i]] += expectScore;
+        expectPoint[3][p3[i]] += expectScore;
+      }
     }
 
     /*
@@ -562,6 +575,32 @@ class Tutorial{
       }
     }
 
+    vector<PickUpList> selectHiddenPick(int id, int num, int point, vector<int> data){
+      //fprintf(stderr, "selectHiddenPick =>\n");
+      vector<PickUpList> list;
+      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList>  > que;
+      double score;
+
+      do{
+        PickUpList pl;
+        pl.list = data;
+        addPoint(id, data, point);
+
+        score = calcScore(id);
+        pl.score = score;
+        que.push(pl);
+
+        subPoint(id, data, point);
+      }while(next_combination(data.begin(), data.begin()+num, data.end()));
+
+      for(int i = 0; i < 10 && !que.empty(); i++){
+        PickUpList pl = que.top(); que.pop();
+        list.push_back(pl);
+      }
+
+      return list;
+    }
+
     /*
      * 相手のスコアを考慮しない場合の最適な手順を考える
      */
@@ -601,7 +640,6 @@ class Tutorial{
       double bestScore = -1000000000.0;
       double score;
       vector<int> bestPattern;
-      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList> > que;
 
       vector<PickUpList> p1list = selectTopPick(1, 5);
       vector<PickUpList> p2list = selectTopPick(2, 5);
@@ -642,27 +680,23 @@ class Tutorial{
           subPoint(1, p1list[i].list);
         }
 
-        PickUpList pick;
-        pick.score = totalScore;
-        pick.list = data;
-        pick.idList = idList;
-        que.push(pick);
+
+        if(bestScore < totalScore){
+          bestScore = totalScore;
+          bestPattern = data;
+        }
 
         subPoint(myId, data);
 
       } while(g.next());
 
-      vector<int> ans = que.top().list;
-      bestIdList = que.top().idList;
-
-      return ans;
+      return bestPattern;
     }
 
     vector<int> holidaySelect(){
       double bestScore = -1000000000.0;
       double totalScore;
       vector<int> bestPattern;
-      priority_queue< PickUpList, vector<PickUpList>, greater<PickUpList> > que;
 
       vector<PickUpList> p1list = selectTopPick(1, 2, 2);
       vector<PickUpList> p2list = selectTopPick(2, 2, 2);
@@ -702,20 +736,16 @@ class Tutorial{
           subPoint(1, p1list[i].list, 2);
         }
 
-        PickUpList pick;
-        pick.score = totalScore;
-        pick.list = data;
-        pick.idList = idList;
-        que.push(pick);
+        if(bestScore < totalScore){
+          bestScore = totalScore;
+          bestPattern = data;
+        }
 
         subPoint(myId, data, 2);
 
       } while(g.next());
 
-      vector<int> ans = que.top().list;
-      bestIdList = que.top().idList;
-
-      return ans;
+      return bestPattern;
     }
 
     /*
@@ -831,7 +861,7 @@ class Tutorial{
           res = weekSelect();
         }
 
-        cout << submit2string(res) << " " << leaning2string() << endl;
+        cout << submit2string(res) << endl;
       }
     }
 
@@ -866,20 +896,6 @@ class Tutorial{
           totalHiddenCount--;
         }
       }
-
-      return res;
-    }
-    string leaning2string(){
-      int size = bestIdList.size();
-      string res = "";
-
-      for(int i = 0; i < size; i++){
-        stringstream ss;
-        ss << bestIdList[i];
-        res += ss.str();
-        if(i != size-1) res += " ";
-      }
-
 
       return res;
     }

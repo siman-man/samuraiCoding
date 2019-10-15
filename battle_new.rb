@@ -30,8 +30,8 @@ class AI
 end
 
 class Battle
-  def initialize(cflag)
-    @participant = ['sample5', 'sample8', 'sample9', 'sample6']
+  def initialize
+    @participant = ['siman', 'sample9', 'sample7', 'sample8']
     @ais = []
     @hidden_point = Array.new(6, 0)
     @lang_points = Array.new(6){ Array.new(4, 0) }
@@ -43,7 +43,7 @@ class Battle
     @values = Array.new
 
     @participant.each_with_index do |name, id|
-      `g++ #{name}.cpp -O2 -o #{name}` if cflag
+      `g++ #{name}.cpp -O2 -o #{name}`
       @ais << AI.new(IO.popen("./#{name}", 'r+'), id, name)
     end
 
@@ -101,8 +101,6 @@ class Battle
 
   def update(id, response)
     data = response.split(' ').map(&:to_i)
-
-    #$stderr.puts "#{id}: #{response.inspect}"
 
     if holiday?
       selection = data.first(2)
@@ -245,7 +243,7 @@ class Battle
   end
 
   def show_result
-    $stderr.puts "total: #{@attention_list.inject(:+)} - #{@attention_list.join(' ')}"
+    $stderr.puts "total: #{@attention_list.inject(:+)} - #{@attention_list.sort.join(' ')}"
     @ais.sort_by{|ai| -ai.score }.each.with_index(1) do |ai, rank|
       puts "name:#{ai.name}\tscore:#{ai.score}\tranking:#{rank}"
     end
@@ -290,7 +288,6 @@ class Battle
         @hidden_point = Array.new(6, 0)
       end
 
-
       @ais.each do |ai|
         ai.input(input_params(ai.id))
         response = ai.response.chomp
@@ -320,4 +317,4 @@ class Battle
   end
 end
 
-Battle.new(ARGV.any?).run
+Battle.new.run
